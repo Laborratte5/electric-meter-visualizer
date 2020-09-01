@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, abort, make_response, jsonify
 
 app = Flask(__name__)
 
@@ -6,6 +6,7 @@ app = Flask(__name__)
 def index():
     return render_template('index.html')
 
+# Data API
 @app.route('/api/json/data')
 def data():
     return 'data'
@@ -26,6 +27,11 @@ def month_data():
 def year_data():
     return 'year data'
 
+@app.route('/api/json/data/years')
+def years_data():
+    return 'years data'
+
+# Electric meter API
 @app.route('/api/json/electric-meter')
 def electric_meter():
     return 'electric meter'
@@ -42,6 +48,7 @@ def remove_electric_meter():
 def change_electric_meter():
     return 'change electric meter'
 
+# Database API
 @app.route('/api/json/database')
 def database():
     return 'database'
@@ -54,4 +61,4 @@ def add_database():
 def remove_database():
     return 'remove database'
 
-app.run()
+#app.run()
