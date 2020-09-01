@@ -6,16 +6,52 @@ app = Flask(__name__)
 def index():
     return render_template('index.html')
 
-@app.route('/data/day')
-def dayData():
-    pass
+@app.route('/api/json/data')
+def data():
+    return 'data'
 
-@app.route('/data/month')
-def monthData():
-    pass
+@app.route('/api/json/data/day')
+def day_data():
+    return 'day data'
 
-@app.route('/data/year')
-def yearData():
-    pass
+@app.route('/api/json/data/week')
+def week_data():
+    return 'week data'
+
+@app.route('/api/json/data/month')
+def month_data():
+    return 'month data'
+
+@app.route('/api/json/data/year')
+def year_data():
+    return 'year data'
+
+@app.route('/api/json/electric-meter')
+def electric_meter():
+    return 'electric meter'
+
+@app.route('/api/json/electric-meter/add')
+def add_electric_meter():
+    return 'add electric meter'
+
+@app.route('/api/json/electric-meter/remove')
+def remove_electric_meter():
+    return 'remove electric meter'
+
+@app.route('/api/json/electric-meter/change')
+def change_electric_meter():
+    return 'change electric meter'
+
+@app.route('/api/json/database')
+def database():
+    return 'database'
+
+@app.route('/api/json/database/add')
+def add_database():
+    return 'add database'
+
+@app.route('/api/json/database/remove')
+def remove_database():
+    return 'remove database'
 
 app.run()
