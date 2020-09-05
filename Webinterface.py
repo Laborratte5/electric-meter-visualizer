@@ -1,6 +1,11 @@
 from flask import Flask, render_template, request, abort, make_response, jsonify
 
+from Logic import Logic
+
 app = Flask(__name__)
+development_mode = app.config['ENV'] == 'development'
+
+logic = Logic(development_mode)
 
 # TODO dokumentieren und verwenden
 api_codes = {"missing_parameter": 100,
@@ -40,7 +45,12 @@ def years_data():
 # Electric meter API
 @app.route('/api/json/electric-meter')
 def electric_meter():
-    return 'electric meter'
+    # FIXME
+    electric_meters = logic.get_electric_meter()
+    return jsonify({
+        "electric-meters": electric_meters
+    })
+    #return 'electric meter'
 
 @app.route('/api/json/electric-meter/add')
 def add_electric_meter():
@@ -51,16 +61,21 @@ def add_electric_meter():
     # Check parameter value
     # TODO objekt das in liste eingefügt wird vielleicht über funktion auslagern
     # TODO vllt auch noch api status code einfügen
-    if params['value'] <= 0:
+    value = params['value']
+    pin = params['pin']
+    active_low = params['active-low']
+    name = params['name']
+
+    if value <= 0:
         invalid_parameter_value.append({"parameter": "value",
                                         "message": "must be greater than 0"
                                         })
-    if params['pin'] <= 0:
+    if pin <= 0:
         invalid_parameter_value.append({"parameter": "pin",
                                         "message": "must be greater than 0"
                                         })
     # TODO Namenslänge ohne whitespace character > 0
-    if not bool(params['name']):
+    if not bool(name):
         invalid_parameter_value.append({"parameter": "name",
                                         "message": "must contain text"
                                         })
@@ -68,9 +83,13 @@ def add_electric_meter():
     if len(invalid_parameter_value) > 0:
         abort_parameter('invalid parameter value', invalid_parameter_value)
 
-
-
-    return ''
+    # Add new electric meter
+    new_meter, id = logic.add_electric_meter(value, pin, active_low=active_low, name=name)
+    json_response = {
+                    "id": id,
+                    "new_meter": electric_meter_to_dic(new_meter)
+                    }
+    return json_response
 
 @app.route('/api/json/electric-meter/remove')
 def remove_electric_meter():
@@ -156,5 +175,15 @@ def abort_parameter(info, parameter_list):
     response = make_response(json_message, 400)
     abort(response)
 
-if app.config['ENV'] == 'development':
+
+def electric_meter_to_dic(electric_meter):
+    return {
+        "name": electric_meter.name,
+        "value": electric_meter.value,
+        "pin": electric_meter.pin,
+        "active_low": electric_meter.active_low
+    }
+
+
+if development_mode:
     app.run()
