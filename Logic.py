@@ -23,5 +23,29 @@ class Logic:
 
         return new_meter, self.next_id
 
-    def get_electric_meter(self):
+    def remove_electric_meter(self, id):
+        del self.electric_meters[id]
+
+#    def get_electric_meter(self, id):
+#        return self.electric_meters[id]
+
+    def get_electric_meters(self):
         return [(self.electric_meters[id], id) for id in self.electric_meters.keys()]
+
+    def change_electric_meter(self, id, value=None, pin=None, active_low=None, name=None):
+        # TODO
+        try:
+            electric_meter = self.electric_meters[id]
+        except KeyError as e:
+            raise e
+
+        if value is not None:
+            electric_meter.value = value
+        if pin is not None:
+            electric_meter.pin = pin
+        if active_low is not None:
+            electric_meter.active_low = active_low
+        if name is not None:
+            electric_meter.name = name
+
+        return electric_meter

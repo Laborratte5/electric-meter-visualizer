@@ -43,22 +43,22 @@ def years_data():
     return 'years data'
 
 # Electric meter API
+# TODO test
 @app.route('/api/json/electric-meter')
+@app.route('/api/json/electric-meter/')
 def electric_meter():
     # TODO test method
-    electric_meters = logic.get_electric_meter()
+    electric_meters = logic.get_electric_meters()
     electric_meters_json = [{"id": id, "electric_meter": electric_meter_to_dic(electric_meter)}
                             for electric_meter, id in electric_meters]
     return {
         "electric-meters": electric_meters_json
     }
-    #return 'electric meter'
 
-# TODO test
 @app.route('/api/json/electric-meter/add')
 def add_electric_meter():
     # TODO write test for parse_parameter_json
-    params = parse_parameter_json((('value', float), ('pin', int), ('active-low', bool), ('name', str)))
+    params = parse_parameter_json(('value', float), ('pin', int), ('active-low', bool), ('name', str))
 
     invalid_parameter_value = []
     # Check parameter value
@@ -96,11 +96,44 @@ def add_electric_meter():
 
 @app.route('/api/json/electric-meter/remove')
 def remove_electric_meter():
+    params = parse_parameter_json(('id', int))
+    logic.remove_electric_meter(params['id'])
+    # TODO return removed electric_meter/success message or error on failure
     return 'remove electric meter'
 
 @app.route('/api/json/electric-meter/change')
 def change_electric_meter():
-    return 'change electric meter'
+    params = parse_parameter_json(('id', int))
+
+    id = params['id']
+    value = None
+    pin = None
+    active_low = None
+    name = None
+
+    if 'value' in request.args.keys():
+        params = parse_parameter_json(('value', float))
+        value = params['value']
+    if 'pin' in request.args.keys():
+        params = parse_parameter_json(('pin', int))
+        pin = params['pin']
+    if 'active-low' in request.args.keys():
+        params = parse_parameter_json(('active-low', bool))
+        active_low = params['active-low']
+    if 'name' in request.args.keys():
+        params = parse_parameter_json(('name', str))
+        name = params['name']
+
+    try:
+        changed_meter = logic.change_electric_meter(id, value, pin, active_low, name)
+        return electric_meter_to_dic(changed_meter)
+    except KeyError as e:
+        json_message = jsonify({
+            "code": 400,
+            "info": "no electric meter with this id found",
+        })
+        response = make_response(json_message, 400)
+        abort(response)
 
 # Database API
 @app.route('/api/json/database')
@@ -118,7 +151,7 @@ def remove_database():
 
 # Helper functions
 # TODO test
-def parse_parameter_json(expected_parameter, arguments=None):
+def parse_parameter_json(*expected_parameter, arguments=None):
     if arguments is None:
         arguments = request.args
 
@@ -167,6 +200,7 @@ def parse_parameter_json(expected_parameter, arguments=None):
 
     dic = {param_name: parse_param(param_name, param_type) for param_name, param_type in expected_parameter}
     return dic
+
 
 # TODO test
 def abort_parameter(info, parameter_list):
