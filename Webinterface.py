@@ -45,13 +45,16 @@ def years_data():
 # Electric meter API
 @app.route('/api/json/electric-meter')
 def electric_meter():
-    # FIXME
+    # TODO test method
     electric_meters = logic.get_electric_meter()
-    return jsonify({
-        "electric-meters": electric_meters
-    })
+    electric_meters_json = [{"id": id, "electric_meter": electric_meter_to_dic(electric_meter)}
+                            for electric_meter, id in electric_meters]
+    return {
+        "electric-meters": electric_meters_json
+    }
     #return 'electric meter'
 
+# TODO test
 @app.route('/api/json/electric-meter/add')
 def add_electric_meter():
     # TODO write test for parse_parameter_json
@@ -165,7 +168,7 @@ def parse_parameter_json(expected_parameter, arguments=None):
     dic = {param_name: parse_param(param_name, param_type) for param_name, param_type in expected_parameter}
     return dic
 
-
+# TODO test
 def abort_parameter(info, parameter_list):
     json_message = jsonify({
         "code": 400,
@@ -176,6 +179,7 @@ def abort_parameter(info, parameter_list):
     abort(response)
 
 
+# TODO test
 def electric_meter_to_dic(electric_meter):
     return {
         "name": electric_meter.name,

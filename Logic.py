@@ -24,4 +24,4 @@ class Logic:
         return new_meter, self.next_id
 
     def get_electric_meter(self):
-        return [(meter, id) for meter, id in self.electric_meters]
+        return [(self.electric_meters[id], id) for id in self.electric_meters.keys()]

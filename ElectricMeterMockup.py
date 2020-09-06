@@ -1,5 +1,5 @@
 
-class ElectricMeterMockup():
+class ElectricMeterMockup:
 
     def __init__(self, value, pin, active_low, name):
         print('new electric meter with: ', value, pin, active_low, name)
