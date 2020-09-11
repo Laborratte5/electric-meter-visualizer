@@ -10,7 +10,8 @@ logic = Logic(development_mode)
 # TODO dokumentieren und verwenden
 api_codes = {"missing_parameter": 100,
              "invalid_type": 200,
-             "invalid_values": 300
+             "invalid_value": 300,
+             "no_electric_meter_id": 400
              }
 
 @app.route('/')
@@ -45,15 +46,28 @@ def years_data():
 # Electric meter API
 # TODO test
 @app.route('/api/json/electric-meter')
-@app.route('/api/json/electric-meter/')
 def electric_meter():
-    # TODO test method
-    electric_meters = logic.get_electric_meters()
-    electric_meters_json = [{"id": id, "electric_meter": electric_meter_to_dic(electric_meter)}
-                            for electric_meter, id in electric_meters]
-    return {
-        "electric-meters": electric_meters_json
-    }
+    # Supplied id means return only electric meter with this id
+    if 'id' in request.args.keys():
+        params = parse_parameter_json(('id', int))
+        id = params['id']
+        # Search for electric meter witch specific id
+        try:
+            electric_meter = logic.get_electric_meter(id)
+            electric_meters_json = electric_meter_to_dic(electric_meter)
+            return {
+                "electric-meter": electric_meters_json
+            }
+        except KeyError:
+            abort_no_electric_meter_with_id(id)
+    # No id means return all electric meter
+    else:
+        electric_meters = logic.get_electric_meters()
+        electric_meters_json = [{"id": id, "electric_meter": electric_meter_to_dic(electric_meter)}
+                                for electric_meter, id in electric_meters]
+        return {
+            "electric-meters": electric_meters_json
+        }
 
 @app.route('/api/json/electric-meter/add')
 def add_electric_meter():
@@ -62,7 +76,7 @@ def add_electric_meter():
 
     invalid_parameter_value = []
     # Check parameter value
-    # TODO objekt das in liste eingefügt wird vielleicht über funktion auslagern
+    # TODO objekt das in liste 'invalid_parameter_value' eingefügt wird vielleicht über funktion auslagern
     # TODO vllt auch noch api status code einfügen
     value = params['value']
     pin = params['pin']
@@ -96,10 +110,16 @@ def add_electric_meter():
 
 @app.route('/api/json/electric-meter/remove')
 def remove_electric_meter():
+    # Parse parameter
     params = parse_parameter_json(('id', int))
-    logic.remove_electric_meter(params['id'])
-    # TODO return removed electric_meter/success message or error on failure
-    return 'remove electric meter'
+    id = params['id']
+    # Remove electric meter with id and return it
+    try:
+        removed_meter = logic.remove_electric_meter(id)
+        return electric_meter_to_dic(removed_meter)
+    #
+    except KeyError as e:
+        abort_no_electric_meter_with_id(id)
 
 @app.route('/api/json/electric-meter/change')
 def change_electric_meter():
@@ -111,6 +131,7 @@ def change_electric_meter():
     active_low = None
     name = None
 
+    # TODO check parameter values
     if 'value' in request.args.keys():
         params = parse_parameter_json(('value', float))
         value = params['value']
@@ -128,12 +149,7 @@ def change_electric_meter():
         changed_meter = logic.change_electric_meter(id, value, pin, active_low, name)
         return electric_meter_to_dic(changed_meter)
     except KeyError as e:
-        json_message = jsonify({
-            "code": 400,
-            "info": "no electric meter with this id found",
-        })
-        response = make_response(json_message, 400)
-        abort(response)
+        abort_no_electric_meter_with_id(id)
 
 # Database API
 @app.route('/api/json/database')
@@ -202,7 +218,6 @@ def parse_parameter_json(*expected_parameter, arguments=None):
     return dic
 
 
-# TODO test
 def abort_parameter(info, parameter_list):
     json_message = jsonify({
         "code": 400,
@@ -213,13 +228,22 @@ def abort_parameter(info, parameter_list):
     abort(response)
 
 
-# TODO test
+def abort_no_electric_meter_with_id(id):
+    json_message = jsonify({
+        "code": 400,
+        "info": "no electric meter with this id found",
+        "id": int(id)
+    })
+    response = make_response(json_message, 400)
+    abort(response)
+
+
 def electric_meter_to_dic(electric_meter):
     return {
         "name": electric_meter.name,
         "value": electric_meter.value,
         "pin": electric_meter.pin,
-        "active_low": electric_meter.active_low
+        "active-low": electric_meter.active_low
     }
 
 
