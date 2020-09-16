@@ -23,8 +23,12 @@ class Database:
 
     @classmethod
     def load(cls, file):
+        if not file.endswith('.rrd'):
+            file += '.rrd'
+
         if not os.path.isfile(file):
             raise FileNotFoundError
+
         return Database(file)
 
     # =============================
@@ -42,10 +46,26 @@ class Database:
 
         ret = {}
         for cf in ('LAST', 'AVERAGE', 'MIN', 'MAX'):
-            result = rrd.fetch(self.db, cf)
-            ret[cf] = self._parse_result(result)
+            try:
+                result = rrd.fetch(self.db, cf)
+                ret[cf] = self._parse_result(result)
+            except OperationalError:
+                # If database doesn't contain round robin archive with given consolidate function, continue with next
+                continue
 
         return ret
+
+    def add_data_source(self, ds_spec):
+        rrd.tune(self.db, 'DS:' + ds_spec)
+
+    def remove_data_source(self, idx):
+        rrd.tune(self.db, 'DEL:' + idx)
+
+    def add_rrd_archive(self, rra_spec):
+        rrd.tune(self.db, 'RRA:' + rra_spec)
+
+    def remove_rrd_archive(self, idx):
+        rrd.tune(self.db, 'DELRRA:' + idx)
 
     # =============================
     def _parse_result(self, result):

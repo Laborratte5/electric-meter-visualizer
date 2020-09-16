@@ -66,8 +66,24 @@ class MyTestCase(unittest.TestCase):
         filtered = [value for time_stamp, value in data if epoch - 15 < time_stamp < epoch + 15]
         self.assertTrue(100 in filtered)
 
+    def test_add_data_source(self):
+        pass
+
+    def test_remove_data_source(self):
+        pass
+
+    def test_add_round_robin_archive(self):
+        pass
+
+    def test_remove_round_robin_archive(self):
+        pass
+
     def test_parse_result(self):
         pass
+
+
+    # TODO test database consolidate feature
+    # (add data until an archive with e.g. 'AVERAGE' is filled and check wether it's filled)
 
 
 if __name__ == '__main__':
