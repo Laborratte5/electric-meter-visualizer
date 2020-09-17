@@ -3,6 +3,43 @@ import os
 import rrdtool as rrd
 
 
+class Datasource:
+
+    def __init__(self, ds_name, dst, heartbeat, min='U', max='U'):
+        self.name = str(ds_name)
+        self.specs = str(ds_name) + ':' + str(dst) + ':' + str(heartbeat) + ':' + str(min) + ":" + str(max)
+
+    def get_name(self):
+        return self.name
+
+    def get_complete_string(self):
+        return 'DS:' + self.specs
+
+    def get_spec_string(self):
+        return self.specs
+
+
+class RoundRobinArchive:
+
+    def __init__(self, cf, xff, steps, rows):
+        if cf not in ('LAST', 'MIN', 'MAX', 'AVERAGE'):
+            raise ValueError('cf can only be LAST, MIN, MAX, AVERAGE')
+        if not 0 <= xff <= 1:
+            raise ValueError('xff must be between 0 and 1')
+        if not steps > 0:
+            raise ValueError('steps has to be positive')
+        if not rows > 0:
+            raise ValueError('rows has to be positive')
+
+        self.spec = str(cf) + ':' + str(xff) + ':' + str(steps) + ':' + str(rows)
+
+    def get_complete_string(self):
+        return 'RRA:' + self.spec
+
+    def get_spec_string(self):
+        return self.spec
+
+
 class Database:
 
     def __init__(self, file):
@@ -55,17 +92,17 @@ class Database:
 
         return ret
 
-    def add_data_source(self, ds_spec):
-        rrd.tune(self.db, 'DS:' + ds_spec)
+    def add_data_source(self, ds):
+        rrd.tune(self.db, 'DS:' + ds.get_spec_string())
 
-    def remove_data_source(self, idx):
-        rrd.tune(self.db, 'DEL:' + idx)
+    def remove_data_source(self, ds):
+        rrd.tune(self.db, 'DEL:' + ds.get_name())
 
-    def add_rrd_archive(self, rra_spec):
-        rrd.tune(self.db, 'RRA:' + rra_spec)
+    def add_rrd_archive(self, rra):
+        rrd.tune(self.db, 'RRA:' + rra.get_spec_string())
 
     def remove_rrd_archive(self, idx):
-        rrd.tune(self.db, 'DELRRA:' + idx)
+        rrd.tune(self.db, 'DELRRA:' + str(idx))
 
     # =============================
     def _parse_result(self, result):
