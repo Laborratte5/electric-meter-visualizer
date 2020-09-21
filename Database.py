@@ -24,11 +24,15 @@ class RoundRobinArchive:
     def __init__(self, cf, xff, steps, rows):
         if cf not in ('LAST', 'MIN', 'MAX', 'AVERAGE'):
             raise ValueError('cf can only be LAST, MIN, MAX, AVERAGE')
-        if not 0 <= xff <= 1:
+        try:
+            float(xff)
+        except TypeError as te:
+            raise te
+        if not 0 <= float(xff) <= 1:
             raise ValueError('xff must be between 0 and 1')
-        if not steps > 0:
+        if not int(steps) > 0:
             raise ValueError('steps has to be positive')
-        if not rows > 0:
+        if not int(rows) > 0:
             raise ValueError('rows has to be positive')
 
         self.spec = str(cf) + ':' + str(xff) + ':' + str(steps) + ':' + str(rows)

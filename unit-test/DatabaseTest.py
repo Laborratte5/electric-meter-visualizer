@@ -4,11 +4,12 @@ import os
 import subprocess
 import unittest
 
+import rrdtool as rrd
 from Database import Database
 from Database import Datasource as DS
 from Database import RoundRobinArchive as RRA
 
-
+# TODO try to write tests without time.sleep(x)
 class MyTestCase(unittest.TestCase):
     def setUp(self):
         self.test_db = 'test.rrd'
@@ -97,36 +98,84 @@ class MyTestCase(unittest.TestCase):
 
         # Test if datasource was removed
         code = subprocess.call(['rrdtool', 'update', self.test_db, 'N:0:0'])
-        self.assertNotEquals(code, 0)
+        self.assertNotEqual(code, 0)
 
     def test_add_round_robin_archive(self):
-        # TODO
+        assert subprocess.call(['rrdtool', 'create', self.test_db, '--step', '1',
+                                'DS:em1:GAUGE:10:U:U', 'RRA:LAST:0.5:1:1']) == 0
         # Test if RRA exists
+        # Add data to rra
+        for i in range(3):
+            assert subprocess.call(['rrdtool', 'update', self.test_db, 'N:1']) == 0
+            time.sleep(1)
+        # Fetch data and test if only last data sample exists
+        info, data_src, data = rrd.fetch(self.test_db, 'LAST')
+        non_empty = 0
+        for d in data:
+            if d[0] is not None:
+                non_empty += 1
+        assert non_empty == 1
 
         # Add RRA
+        db = Database(self.test_db)
+        db.add_rrd_archive(RRA('LAST', '0.5', '1', '10'))
 
         # Test if RRA exists
-        #self.assertTrue(False)
-        pass
+        # Add data to rra
+        for i in range(3):
+            assert subprocess.call(['rrdtool', 'update', self.test_db, 'N:1']) == 0
+            time.sleep(1)
+        # Fetch data and test if enough data sample exists
+        info, data_src, data = rrd.fetch(self.test_db, 'LAST')
+        non_empty = 0
+        for d in data:
+            if d[0] is not None:
+                non_empty += 1
+        self.assertGreater(non_empty, 1)
 
     def test_remove_round_robin_archive(self):
-        # TODO
+        assert subprocess.call(['rrdtool', 'create', self.test_db, '--step', '1',
+                                'DS:em1:GAUGE:10:U:U', 'RRA:LAST:0.5:1:1', 'RRA:LAST:0.5:1:3']) == 0
         # Test if RRA exists
+        # Add data to rra
+        for i in range(3):
+            assert subprocess.call(['rrdtool', 'update', self.test_db, 'N:1']) == 0
+            time.sleep(1)
+        # Fetch data and test if enough data sample exists
+        info, data_src, data = rrd.fetch(self.test_db, 'LAST')
+        non_empty = 0
+        for d in data:
+            if d[0] is not None:
+                non_empty += 1
+        assert non_empty > 1
 
         # Remove RRA
+        db = Database(self.test_db)
+        db.remove_rrd_archive(1)
 
         # Test if RRA was removed
-
-        #self.assertTrue(False)
-        pass
+        # Add data to rra
+        for i in range(3):
+            assert subprocess.call(['rrdtool', 'update', self.test_db, 'N:1']) == 0
+            time.sleep(1)
+        # Fetch data and test if enough data sample exists
+        info, data_src, data = rrd.fetch(self.test_db, 'LAST')
+        non_empty = 0
+        for d in data:
+            if d[0] is not None:
+                non_empty += 1
+        self.assertEqual(non_empty, 1)
 
     def test_parse_result(self):
+        # TODO
         pass
 
 
     # TODO test database consolidate feature
     # (add data until an archive with e.g. 'AVERAGE' is filled and check wether it's filled)
 
+# TODO test datasource/RoundRobinArchive class
+# TODO test invalid/missing parameters
 
 if __name__ == '__main__':
     unittest.main()
