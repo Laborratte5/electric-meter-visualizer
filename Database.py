@@ -88,7 +88,7 @@ class Database:
         ret = {}
         for cf in ('LAST', 'AVERAGE', 'MIN', 'MAX'):
             try:
-                result = rrd.fetch(self.db, cf)
+                result = rrd.fetch(self.db, cf, time_parameters)
                 ret[cf] = self._parse_result(result)
             except OperationalError:
                 # If database doesn't contain round robin archive with given consolidate function, continue with next
