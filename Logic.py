@@ -1,6 +1,10 @@
 from ElectricMeter import ElectricMeter
 from ElectricMeterMockup import ElectricMeterMockup
+import os
 
+from Database import Database
+from Database import RoundRobinArchive as RRA
+from Database import Datasource as DS
 
 class Logic:
 
@@ -8,7 +12,49 @@ class Logic:
         self.development = development
         self.next_id = 0  # TODO letzte id aus datei laden
         self.electric_meters = {}  # TODO aus datei laden
-        pass
+        self.config = {}  # TODO aus config laden
+
+        database_file = 'data.rrd'
+        if os.path.isfile(database_file):
+            self.database = Database.load(database_file)
+        else:
+            # Time/step values for rrd
+            self.db_step = 900 # 15min. # TODO step vllt aus config laden
+            hourly = 3600 / self.db_step
+            daily = 24 * hourly
+            weekly = 7 * daily
+            yearly = ((3 * 365 + 366) / 4) * daily
+            monthly = yearly / 12
+
+            # TODO aus config laden
+            keep_daily = 7
+            keep_weekly = 4
+            keep_monthly = 12
+            keep_yearly = 3
+
+            xff = 0.5
+
+            rras = []
+            # TODO nochmal nachdenken ob so wirklich richtige gespeichert wird
+            # Average RRA
+            rras.append(RRA('LAST', xff, 1, daily))
+            rras.append(RRA('AVERAGE', xff, daily, keep_daily))
+            rras.append(RRA('AVERAGE', xff, weekly, keep_weekly))
+            rras.append(RRA('AVERAGE', xff, monthly, keep_monthly))
+            rras.append(RRA('AVERAGE', xff, yearly, keep_yearly))
+            # Min RRA
+            rras.append(RRA('MIN', xff, daily, keep_daily))
+            rras.append(RRA('MIN', xff, weekly, keep_weekly))
+            rras.append(RRA('MIN', xff, monthly, keep_monthly))
+            rras.append(RRA('MIN', xff, yearly, keep_yearly))
+            # Max RRA
+            rras.append(RRA('MAX', xff, daily, keep_daily))
+            rras.append(RRA('MAX', xff, weekly, keep_weekly))
+            rras.append(RRA('MAX', xff, monthly, keep_monthly))
+            rras.append(RRA('MAX', xff, yearly, keep_yearly))
+
+            dummy_data_source = DS('DUMMY','GAUGE', 2 * self.db_step)
+            self.database = Database.create(database_file, self.db_step, dummy_data_source, rras)
 
     def add_electric_meter(self, value, pin, active_low, name):
         self.next_id += 1
@@ -19,7 +65,7 @@ class Logic:
             new_meter = ElectricMeter(value, pin, active_low, name)
         self.electric_meters[self.next_id] = new_meter
 
-        # TODO timer um alle 'intervall' amount von electric-meter auszulesen
+        # TODO timer um alle 'db_step' amount von electric-meter auszulesen
 
         return new_meter, self.next_id
 
