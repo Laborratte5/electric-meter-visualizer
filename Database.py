@@ -58,9 +58,15 @@ class Database:
             name += '.rrd'
 
         # Convert data_srcs to string
-        data_srcs = [ds.get_complete_string() for ds in data_srcs]
+        try:
+            data_srcs = [ds.get_complete_string() for ds in data_srcs]
+        except TypeError:
+            data_srcs = data_srcs.get_complete_string()
         # Convert archives to string
-        archives = [archive.get_complete_string() for archive in archives]
+        try:
+            archives = [archive.get_complete_string() for archive in archives]
+        except TypeError:
+            archives = archives.get_complete_string()
 
         # Create database
         rrd.create(name, '--step', str(step), data_srcs, archives)
