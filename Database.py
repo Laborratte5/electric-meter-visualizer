@@ -35,7 +35,7 @@ class RoundRobinArchive:
         if not int(rows) > 0:
             raise ValueError('rows has to be positive')
 
-        self.spec = str(cf) + ':' + str(xff) + ':' + str(steps) + ':' + str(rows)
+        self.spec = str(cf) + ':' + str(xff) + ':' + str(int(steps)) + ':' + str(int(rows))
 
     def get_complete_string(self):
         return 'RRA:' + self.spec
