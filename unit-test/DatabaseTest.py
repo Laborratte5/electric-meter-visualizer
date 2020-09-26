@@ -17,7 +17,9 @@ class MyTestCase(unittest.TestCase):
             os.remove(self.test_db)
 
     def test_create_db(self):
-        db = Database.create(self.test_db, 5, ['DS:em1:GAUGE:10:U:U'], ['RRA:LAST:0.5:1:10'])
+        datasource = [DS('em1','GAUGE', 10)]
+        rra = [RRA('LAST', 0.5, 1, 10)]
+        db = Database.create(self.test_db, 5, datasource, rra)
         self.assertNotEqual(db, None)
         self.assertTrue(os.path.isfile(self.test_db))
 
