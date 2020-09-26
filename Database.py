@@ -57,6 +57,11 @@ class Database:
         if not name.endswith('.rrd'):
             name += '.rrd'
 
+        # Convert data_srcs to string
+        data_srcs = [ds.get_complete_string() for ds in data_srcs]
+        # Convert archives to string
+        archives = [archive.get_complete_string() for archive in archives]
+
         # Create database
         rrd.create(name, '--step', str(step), data_srcs, archives)
         # Load database
