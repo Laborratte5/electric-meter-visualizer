@@ -72,12 +72,16 @@ class MyTestCase(unittest.TestCase):
         self.logic.remove_electric_meter(2)
 
         # Check if Electric Meter 2 was removed
-        self.assertEqual(len(self.logic.electric_meters.keys()), 1)
-        self.assertEqual(len(self.db_mock.data_sources), 1)
-        self.assertEqual(len(self.logic.electric_meter_datasource_mapping.keys()), 1)
-        self.assertEqual(len(self.logic.datasources), 1)
-
-        # TODO
+        self.assertNotIn(em2, self.logic.electric_meters.items())
+        self.assertNotIn(ds2, self.db_mock.data_sources)
+        self.assertNotIn(ds2, self.logic.datasources)
+        self.assertNotIn(em2, self.logic.electric_meter_datasource_mapping.keys())
+        self.assertNotIn(ds2, self.logic.electric_meter_datasource_mapping.items())
+        self.assertIn(em1, self.logic.electric_meters.items())
+        self.assertIn(ds1, self.db_mock.data_sources)
+        self.assertIn(ds1, self.logic.datasources)
+        self.assertIn(em1, self.logic.electric_meter_datasource_mapping.keys())
+        self.assertIn(ds1, self.logic.electric_meter_datasource_mapping.items())
 
     def test_remove_last_electric_meter(self):
         # Setup
@@ -93,14 +97,20 @@ class MyTestCase(unittest.TestCase):
         # Add Datasource to DatasourceList
         self.logic.datasources.append(ds1)
 
-        # Remove Electric Meter 1
+        # Remove Electric Meter 1 but one datasource still exists
         self.logic.remove_electric_meter(1)
 
-        # Check if Electric Meter 2 was removed
-        self.assertEqual(len(self.logic.electric_meters.keys()), 1)
-        self.assertEqual(len(self.db_mock.data_sources), 1)
-        self.assertEqual(len(self.logic.electric_meter_datasource_mapping.keys()), 1)
+        # Check if Electric Meter 1 was removed
+        self.assertEqual(len(self.logic.electric_meters.items()), 1)  # Dummy Electric Meter
+        self.assertNotIn(em1, self.logic.electric_meters.items())
+        self.assertEqual(len(self.db_mock.data_sources), 1)  # Dummy Datasource
+        self.assertNotIn(ds1, self.db_mock.data_sources)
+        self.assertEqual(len(self.logic.electric_meter_datasource_mapping.keys()), 1)  # Dummy ElectricMeter/Datasource
+        self.assertEqual(len(self.logic.electric_meter_datasource_mapping.items()), 1)  # Dummy ElectricMeter/Datasource
+        self.assertNotIn(em1, self.logic.electric_meter_datasource_mapping.keys())
+        self.assertNotIn(ds1, self.logic.electric_meter_datasource_mapping.items())
         self.assertEqual(len(self.logic.datasources), 1)
+        self.assertNotIn(ds1, self.logic.datasources)
 
     def test_get_electric_meters(self):
         # TODO write test
