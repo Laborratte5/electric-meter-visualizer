@@ -9,12 +9,14 @@ class DatabaseMock:
 
     def __init__(self):
         self.data_sources = []
+        self.data = {}
 
     def add_data(self, data_list, time='N'):
-        pass
+        for ds, value in zip(self.data_sources, data_list):
+            self.data[ds] = value
 
     def get_data(self, start_time=None, end_time='now'):
-        pass
+        return self.data
 
     def add_data_source(self, ds):
         self.data_sources.append(ds)
@@ -127,6 +129,35 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(em.pin, 500)
         self.assertEqual(em.active_low, True)
         self.assertEqual(em.name, 'changed_em1')
+
+    def test_read_electric_meters(self):
+        # Setup
+        em1 = ElectricMeterMockup(1, 0, False, 'Electric Meter #1')
+        em2 = ElectricMeterMockup(1, 0, False, 'Electric Meter #2')
+        self.logic.electric_meters[0] = em1
+        self.logic.electric_meters[1] = em2
+        ds1 = DS('ds1', 'GAUGE', 2)
+        ds2 = DS('ds2', 'GAUGE', 2)
+        self.logic.datasources.append(ds1)
+        self.logic.datasources.append(ds2)
+        self.logic.datasource_electric_meter_mapping[ds1] = em1
+        self.logic.datasource_electric_meter_mapping[ds2] = em2
+        self.db_mock.add_data_source(ds1)
+        self.db_mock.add_data_source(ds2)
+
+        data1 = 10
+        data2 = 8
+
+        # Test
+        em1.set_count(data1)
+        em2.set_count(data2)
+        self.logic._read_electric_meters()
+
+        # Test if data was added to database
+        data = self.db_mock.get_data()
+
+        self.assertIn(data1, data.values())
+        self.assertIn(data2, data.values())
 
 
 if __name__ == '__main__':

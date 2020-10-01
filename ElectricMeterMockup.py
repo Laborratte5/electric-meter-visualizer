@@ -18,4 +18,4 @@ class ElectricMeterMockup:
         self.count = 0
 
     def set_count(self, new_count):
-        super().count = new_count
+        self.count = new_count
