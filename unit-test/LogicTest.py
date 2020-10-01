@@ -31,7 +31,7 @@ class DatabaseMock:
         pass
 
 
-class MyTestCase(unittest.TestCase):
+class LogicTest(unittest.TestCase):
 
     def setUp(self):
         self.logic = Logic(True)
@@ -158,6 +158,8 @@ class MyTestCase(unittest.TestCase):
 
         self.assertIn(data1, data.values())
         self.assertIn(data2, data.values())
+        self.assertEqual(em1.get_amount(), 0)
+        self.assertEqual(em2.get_amount(), 0)
 
 
 if __name__ == '__main__':
