@@ -60,8 +60,8 @@ class LogicTest(unittest.TestCase):
         self.logic.electric_meters[1] = em1
         self.logic.electric_meters[2] = em2
         # Create Datasource
-        ds1 = DS('em1','GAUGE', 1800)
-        ds2 = DS('em2','GAUGE', 1800)
+        ds1 = DS('em1', 'GAUGE', 1800)
+        ds2 = DS('em2', 'GAUGE', 1800)
         self.db_mock.add_data_source(ds1)
         self.db_mock.add_data_source(ds2)
         # Associate Datasource with ElectricMeter
