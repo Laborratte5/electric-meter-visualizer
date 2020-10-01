@@ -64,7 +64,7 @@ def electric_meter():
     else:
         electric_meters = logic.get_electric_meters()
         electric_meters_json = [{"id": id, "electric_meter": electric_meter_to_dic(electric_meter)}
-                                for electric_meter, id in electric_meters]
+                                for id, electric_meter in electric_meters]
         return {
             "electric-meters": electric_meters_json
         }
