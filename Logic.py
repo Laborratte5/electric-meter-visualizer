@@ -14,14 +14,17 @@ class Logic:
         self.development = development
         self.next_id = 0  # TODO letzte id aus datei laden
         self.electric_meters = {}  # TODO aus datei laden
+        self.datasource_electric_meter_mapping = {}  # TODO aus datei laden
+        self.datasources = []  # TODO aus datei laden
         self.config = {}  # TODO aus config laden
+
+        self.db_step = 900  # 15min. # TODO step vllt aus config laden
 
         database_file = 'data.rrd'
         if os.path.isfile(database_file):
             self.database = Database.load(database_file)
         else:
             # Time/step values for rrd
-            self.db_step = 900 # 15min. # TODO step vllt aus config laden
             hourly = 3600 / self.db_step
             daily = 24 * hourly
             weekly = 7 * daily
@@ -29,6 +32,7 @@ class Logic:
             monthly = yearly / 12
 
             # TODO aus config laden
+            keep_steps = 96
             keep_daily = 7
             keep_weekly = 4
             keep_monthly = 12
@@ -36,27 +40,30 @@ class Logic:
 
             xff = 0.5
 
-            rras = []
+            rras = [RRA('LAST', xff, 1, keep_steps),
+                    # Average RRA
+                    RRA('AVERAGE', xff, daily, keep_daily),
+                    RRA('AVERAGE', xff, weekly, keep_weekly),
+                    RRA('AVERAGE', xff, monthly, keep_monthly),
+                    RRA('AVERAGE', xff, yearly, keep_yearly),
+                    # Min RRA
+                    RRA('MIN', xff, daily, keep_daily),
+                    RRA('MIN', xff, weekly, keep_weekly),
+                    RRA('MIN', xff, monthly, keep_monthly),
+                    RRA('MIN', xff, yearly, keep_yearly),
+                    # Max RRA
+                    RRA('MAX', xff, daily, keep_daily),
+                    RRA('MAX', xff, weekly, keep_weekly),
+                    RRA('MAX', xff, monthly, keep_monthly),
+                    RRA('MAX', xff, yearly, keep_yearly)]
             # TODO nochmal nachdenken ob so wirklich richtige gespeichert wird
-            # Average RRA
-            rras.append(RRA('LAST', xff, 1, daily))
-            rras.append(RRA('AVERAGE', xff, daily, keep_daily))
-            rras.append(RRA('AVERAGE', xff, weekly, keep_weekly))
-            rras.append(RRA('AVERAGE', xff, monthly, keep_monthly))
-            rras.append(RRA('AVERAGE', xff, yearly, keep_yearly))
-            # Min RRA
-            rras.append(RRA('MIN', xff, daily, keep_daily))
-            rras.append(RRA('MIN', xff, weekly, keep_weekly))
-            rras.append(RRA('MIN', xff, monthly, keep_monthly))
-            rras.append(RRA('MIN', xff, yearly, keep_yearly))
-            # Max RRA
-            rras.append(RRA('MAX', xff, daily, keep_daily))
-            rras.append(RRA('MAX', xff, weekly, keep_weekly))
-            rras.append(RRA('MAX', xff, monthly, keep_monthly))
-            rras.append(RRA('MAX', xff, yearly, keep_yearly))
 
+            # Create Database
             dummy_data_source = DS('DUMMY','GAUGE', 2 * self.db_step)
             self.database = Database.create(database_file, self.db_step, dummy_data_source, rras)
+
+        # Timer to read electric_meters every db_step
+        schedule.every(self.db_step).seconds.do(self._read_electric_meters)
 
     def add_electric_meter(self, value, pin, active_low, name):
         self.next_id += 1
@@ -67,19 +74,37 @@ class Logic:
             new_meter = ElectricMeter(value, pin, active_low, name)
         self.electric_meters[self.next_id] = new_meter
 
-        # TODO timer um alle 'db_step' amount von electric-meter auszulesen
+        # Add Datasource to Database
+        new_datasource = DS(name, 'GAUGE', self.db_step*2, min=0)
+        self.database.add_data_source(new_datasource)
+        self.datasource_electric_meter_mapping[new_datasource] = new_meter
+        self.datasources.append(new_datasource)
 
         return new_meter, self.next_id
 
     def remove_electric_meter(self, id):
         removed_meter = self.electric_meters[id]
+        removed_datasource = None
+        # Get removed datasource
+        for datasource in self.datasources:
+            em = self.datasource_electric_meter_mapping[datasource]
+            if self.datasource_electric_meter_mapping[datasource] is removed_meter:
+                removed_datasource = datasource
+                break
+
+        # Remove Datasource Mapping
+        self.database.remove_data_source(removed_datasource)
+        self.datasources.remove(removed_datasource)
+        del self.datasource_electric_meter_mapping[removed_datasource]
         del self.electric_meters[id]
+
         return removed_meter
 
     def get_electric_meter(self, id):
         return self.electric_meters[id]
 
     def get_electric_meters(self):
+        # TODO electric_meters.items()
         return [(self.electric_meters[id], id) for id in self.electric_meters.keys()]
 
     def change_electric_meter(self, id, value=None, pin=None, active_low=None, name=None):
@@ -99,3 +124,16 @@ class Logic:
             electric_meter.name = name
 
         return electric_meter
+
+    def _read_electric_meters(self):
+        # TODO read electric meters
+        data_list = []
+        for datasource in self.datasources:
+            electric_meter = self.datasource_electric_meter_mapping[datasource]
+            power_usage = electric_meter.get_amount()
+            data_list.append(power_usage)
+            electric_meter.reset()
+
+        # Add data_list to database
+        self.database.add_data(data_list)
+        pass
