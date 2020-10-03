@@ -1,152 +1,147 @@
-import os
-
-import rrdtool as rrd
-from rrdtool import OperationalError
-
-
-class Datasource:
-
-    def __init__(self, ds_name, dst, heartbeat, min='U', max='U'):
-        self.name = str(ds_name).replace(' ', '') # Remove whitespaces
-        self.specs = str(self.name) + ':' + str(dst) + ':' + str(heartbeat) + ':' + str(min) + ":" + str(max)
-        self.specs = self.specs.strip()
-
-    def get_name(self):
-        return self.name
-
-    def get_complete_string(self):
-        return 'DS:' + self.specs
-
-    def get_spec_string(self):
-        return self.specs
-
-
-class RoundRobinArchive:
-
-    def __init__(self, cf, xff, steps, rows):
-        if cf not in ('LAST', 'MIN', 'MAX', 'AVERAGE'):
-            raise ValueError('cf can only be LAST, MIN, MAX, AVERAGE')
-        try:
-            float(xff)
-        except TypeError as te:
-            raise te
-        if not 0 <= float(xff) <= 1:
-            raise ValueError('xff must be between 0 and 1')
-        if not int(steps) > 0:
-            raise ValueError('steps has to be positive')
-        if not int(rows) > 0:
-            raise ValueError('rows has to be positive')
-
-        self.spec = str(cf) + ':' + str(xff) + ':' + str(int(steps)) + ':' + str(int(rows))
-        self.spec = self.spec.strip()
-
-    def get_complete_string(self):
-        return 'RRA:' + self.spec
-
-    def get_spec_string(self):
-        return self.spec
+from datetime import datetime
 
 
 class Database:
-
-    def __init__(self, file):
-        self.db = file
+    @classmethod
+    def create_database(cls):
+        # TODO
+        pass
 
     @classmethod
-    def create(cls, name, step, data_srcs, archives):
-        if os.path.isfile(name):
-            raise FileExistsError
+    def load_database(cls):
+        # TODO
+        pass
 
-        if not name.endswith('.rrd'):
-            name += '.rrd'
+    def __init__(self):
+        # TODO
+        pass
 
-        # Convert data_srcs to string
-        try:
-            data_srcs = [ds.get_complete_string() for ds in data_srcs]
-        except TypeError:
-            data_srcs = data_srcs.get_complete_string()
-        # Convert archives to string
-        try:
-            archives = [archive.get_complete_string() for archive in archives]
-        except TypeError:
-            archives = archives.get_complete_string()
+    def add_data_src(self, data_src_name):
+        # TODO
+        pass
 
-        # Create database
-        rrd.create(name, '--step', str(step), data_srcs, archives)
-        # Load database
-        return Database.load(name)
+    def remove_data_src(self, data_src_name):
+        # TODO
+        pass
 
-    @classmethod
-    def load(cls, file):
-        if not file.endswith('.rrd'):
-            file += '.rrd'
+    def get_day(self, delta=0):
+        # get data for each datasource and put it in a dict
+        pass
 
-        if not os.path.isfile(file):
-            raise FileNotFoundError
+    def get_week(self, delta=0):
+        # get data for each datasource and put it in a dict
+        pass
 
-        return Database(file)
+    def get_month(self, delta=0):
+        # get data for each datasource and put it in a dict
+        pass
 
-    # =============================
-    def add_data(self, data_list, time='N'):
-        update_list = ""
-        for data in data_list:
-            update_list += ':' + str(data)
-        rrd.update(self.db, time + update_list)
+    def get_year(self, delta=0):
+        # get data for each datasource and put it in a dict
+        pass
 
-    def get_data(self, start_time=None, end_time='now'):
-        if end_time != 'now':
-            end_time = int(end_time)
-        time_parameters = ['--end', str(end_time)]
-        if start_time is not None:
-            time_parameters += '--start'
-            time_parameters += str(int(start_time))
+    def get_years(self, delta=0):
+        # get data for each datasource and put it in a dict
+        pass
 
-        ret = {}
-        for cf in ('LAST', 'AVERAGE', 'MIN', 'MAX'):
-            try:
-                result = rrd.fetch(self.db, cf, time_parameters)
-                ret[cf] = self._parse_result(result)
-            except OperationalError:
-                # If database doesn't contain round robin archive with given consolidate function, continue with next
-                continue
+class Archive:
 
-        return ret
+    def __init__(self, data_per_day, keep_day, data_per_week, keep_week, data_per_month, keep_month,
+                 data_per_year, keep_year, keep_years):
+        # Data per x
+        self.dpd = data_per_day
+        self.dpw = data_per_week
+        self.dpm = data_per_month
+        self.dpy = data_per_year
+        # Keep x data
+        self.keep_day = keep_day
+        self.keep_week = keep_week
+        self.keep_month = keep_month
+        self.keep_year = keep_year
+        self.keep_years = keep_years
+        # counter
+        self.day_counter = 0
+        self.week_counter = 0
+        self.month_counter = 0
+        self.year_counter = 0
+        self.years_counter = 0
+        # sums
+        self.day_sum = 0
+        self.week_sum = 0
+        self.month_sum = 0
+        self.year_sum = 0
+        self.years_sum = 0
+        # Data archives
+        self.day = []
+        self.week = []
+        self.month = []
+        self.year = []
+        self.years = []
 
-    def add_data_source(self, ds):
-        rrd.tune(self.db, 'DS:' + ds.get_spec_string())
+    def add_data(self, data):
+        self.day_counter += 1
+        self.day_sum += data
 
-    def remove_data_source(self, ds):
-        rrd.tune(self.db, 'DEL:' + ds.get_name())
+        self.week_counter += 1
+        self.week_sum += data
 
-    def add_rrd_archive(self, rra):
-        rrd.tune(self.db, 'RRA:' + rra.get_spec_string())
+        self.month_counter += 1
+        self.month_sum += data
 
-    def remove_rrd_archive(self, idx):
-        rrd.tune(self.db, 'DELRRA:' + str(idx))
+        self.year_counter += 1
+        self.year_sum += data
 
-    # =============================
-    def _parse_result(self, result):
-        start, end, step = result[0]
-        ds = result[1]
-        rows = result[2]
+        self.years_counter += 1
+        self.years_sum += 1
 
-        def is_row_empty(row):
-            if row is None:
-                return False
+        timestamp = datetime.now().timestamp()
 
-            for value in row:
-                if value is not None:
-                    return False
-            return True
+        if self.day_counter == 1:
+            self.day.append((self.day_sum, timestamp))
+            if len(self.day) > self.keep_day:
+                self.day.pop(0)  # Drop oldest value
+            self.day_counter = 0
+            self.day_sum = 0
 
-        # Build dict with datasource : [(timestamp, value) if value not None]
-        len_rows = len(rows)
-        max_idx = len_rows - 1
-        result = {ds[i]: [((end - j * step), rows[max_idx - j][i])
-                         for j in range(len_rows)
-                         if not is_row_empty(rows[max_idx - j])]
-                  for i in range(len(ds))}
-        """data = [((end - i * step), rows[max_idx - i])
-                for i in range(len_rows)
-                if not is_row_empty(rows[max_idx - i])]"""
-        return result
+        if self.week_counter == self.dpd:
+            self.week.append((self.week_sum, timestamp))
+            if len(self.week) > self.keep_week:
+                self.week.pop(0)  # Drop oldest value
+            self.week_counter = 0
+            self.week_sum = 0
+
+        if self.month_counter == self.dpw:
+            self.month.append((self.month_sum, timestamp))
+            if len(self.month) > self.keep_month:
+                self.month.pop(0)  # Drop oldest value
+            self.month_counter = 0
+            self.month_sum = 0
+
+        if self.year_counter == self.dpm:
+            self.year.append((self.year_sum, timestamp))
+            if len(self.year) > self.keep_year:
+                self.year.pop(0)
+            self.year_counter = 0
+            self.year_sum = 0
+
+        if self.years_counter == self.dpy:
+            self.years.append((self.year_sum, timestamp))
+            if len(self.years) > self.keep_years:
+                self.years.pop(0)
+            self.years_counter = 0
+            self.years_sum = 0
+
+    def get_day(self, delta=0):
+        return self.day
+
+    def get_week(self, delta=0):
+        return self.week
+
+    def get_month(self, delta=0):
+        return self.month
+
+    def get_year(self, delta=0):
+        return self.year
+
+    def get_years(self, delta=0):
+        return self.years
