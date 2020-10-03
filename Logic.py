@@ -1,3 +1,7 @@
+import threading
+import time
+from datetime import datetime, timedelta
+
 from ElectricMeter import ElectricMeter
 from ElectricMeterMockup import ElectricMeterMockup
 import os
@@ -6,6 +10,12 @@ import schedule
 from Database import Database
 from Database import RoundRobinArchive as RRA
 from Database import Datasource as DS
+
+
+def _run_scheduler():
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
 
 
 class Logic:
@@ -59,11 +69,17 @@ class Logic:
             # TODO nochmal nachdenken ob so wirklich richtige gespeichert wird
 
             # Create Database
-            dummy_data_source = DS('DUMMY','GAUGE', 2 * self.db_step)
+            dummy_data_source = DS('DUMMY', 'GAUGE', 2 * self.db_step)
             self.database = Database.create(database_file, self.db_step, dummy_data_source, rras)
 
         # Timer to read electric_meters every db_step
         schedule.every(self.db_step).seconds.do(self._read_electric_meters)
+        schedule_thread = threading.Thread(target=_run_scheduler)
+        schedule_thread.setDaemon(True)
+        schedule_thread.start()
+        # TODO schedule run_pending()
+
+    # Electric Meter API
 
     def add_electric_meter(self, value, pin, active_low, name):
         self.next_id += 1
@@ -126,7 +142,6 @@ class Logic:
         return electric_meter
 
     def _read_electric_meters(self):
-        # TODO read electric meters
         data_list = []
         for datasource in self.datasources:
             electric_meter = self.datasource_electric_meter_mapping[datasource]
