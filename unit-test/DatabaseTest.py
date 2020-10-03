@@ -88,6 +88,21 @@ class MyTestCase(unittest.TestCase):
         code = subprocess.call(['rrdtool', 'update', self.test_db, 'N:0:0'])
         self.assertEqual(code, 0)
 
+    def test_add_data_source_with_whitespace(self):
+        assert subprocess.call(['rrdtool', 'create', self.test_db, '--step', '1',
+                                'DS:em1:GAUGE:10:U:U', 'RRA:LAST:0.5:1:10']) == 0
+        # Test if other datasources exists
+        assert subprocess.call(['rrdtool', 'update', self.test_db, 'N:0:0']) != 0
+
+        # Add datasource
+        db = Database(self.test_db)
+        db.add_data_source(DS('ds name with spaces', 'GAUGE', '10'))
+        time.sleep(1)
+
+        # Test if datasource exists
+        code = subprocess.call(['rrdtool', 'update', self.test_db, 'N:0:0'])
+        self.assertEqual(code, 0)
+
     def test_remove_data_source(self):
         assert subprocess.call(['rrdtool', 'create', self.test_db, '--step', '1',
                                 'DS:em1:GAUGE:10:U:U', 'DS:em2:GAUGE:10:U:U', 'RRA:LAST:0.5:1:10']) == 0

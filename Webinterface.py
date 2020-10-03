@@ -25,7 +25,9 @@ def data():
 
 @app.route('/api/json/data/day')
 def day_data():
-    return 'day data'
+    #return 'day data'
+    data = logic.get_day()
+    return str(logic.get_day())
 
 @app.route('/api/json/data/week')
 def week_data():
@@ -150,19 +152,6 @@ def change_electric_meter():
         return electric_meter_to_dic(changed_meter)
     except KeyError as e:
         abort_no_electric_meter_with_id(id)
-
-# Database API
-@app.route('/api/json/database')
-def database():
-    return 'database'
-
-@app.route('/api/json/database/add')
-def add_database():
-    return 'add database'
-
-@app.route('/api/json/database/remove')
-def remove_database():
-    return 'remove database'
 
 
 # Helper functions

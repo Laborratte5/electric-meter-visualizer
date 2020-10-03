@@ -1,13 +1,15 @@
 import os
 
 import rrdtool as rrd
+from rrdtool import OperationalError
 
 
 class Datasource:
 
     def __init__(self, ds_name, dst, heartbeat, min='U', max='U'):
-        self.name = str(ds_name)
-        self.specs = str(ds_name) + ':' + str(dst) + ':' + str(heartbeat) + ':' + str(min) + ":" + str(max)
+        self.name = str(ds_name).replace(' ', '') # Remove whitespaces
+        self.specs = str(self.name) + ':' + str(dst) + ':' + str(heartbeat) + ':' + str(min) + ":" + str(max)
+        self.specs = self.specs.strip()
 
     def get_name(self):
         return self.name
@@ -36,6 +38,7 @@ class RoundRobinArchive:
             raise ValueError('rows has to be positive')
 
         self.spec = str(cf) + ':' + str(xff) + ':' + str(int(steps)) + ':' + str(int(rows))
+        self.spec = self.spec.strip()
 
     def get_complete_string(self):
         return 'RRA:' + self.spec
@@ -91,10 +94,12 @@ class Database:
         rrd.update(self.db, time + update_list)
 
     def get_data(self, start_time=None, end_time='now'):
-        time_parameters = ['--end', end_time]
+        if end_time != 'now':
+            end_time = int(end_time)
+        time_parameters = ['--end', str(end_time)]
         if start_time is not None:
             time_parameters += '--start'
-            time_parameters += str(start_time)
+            time_parameters += str(int(start_time))
 
         ret = {}
         for cf in ('LAST', 'AVERAGE', 'MIN', 'MAX'):
