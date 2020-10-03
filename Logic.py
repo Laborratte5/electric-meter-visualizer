@@ -149,6 +149,7 @@ class Logic:
             data_list.append(power_usage)
             electric_meter.reset()
 
+        data_list.insert(0, 0)  # Insert data dummy
         # Add data_list to database
         self.database.add_data(data_list)
         pass
