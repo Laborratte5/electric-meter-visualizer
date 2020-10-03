@@ -120,8 +120,7 @@ class Logic:
         return self.electric_meters[id]
 
     def get_electric_meters(self):
-        # TODO electric_meters.items()
-        return [(self.electric_meters[id], id) for id in self.electric_meters.keys()]
+        return self.electric_meters.items()
 
     def change_electric_meter(self, id, value=None, pin=None, active_low=None, name=None):
         # TODO
