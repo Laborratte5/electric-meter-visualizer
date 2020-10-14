@@ -25,9 +25,13 @@ def data():
 
 @app.route('/api/json/data/day')
 def day_data():
-    #return 'day data'
-    data = logic.get_day()
-    return str(logic.get_day())
+    # TODO convert dict to dict better suitable for chart.js
+    if 't' in request.args.keys():
+        t_minus = int(request.args['t'])
+        data = logic.get_day(t_minus)
+    else:
+        data = logic.get_day()
+    return dict(data)
 
 @app.route('/api/json/data/week')
 def week_data():
