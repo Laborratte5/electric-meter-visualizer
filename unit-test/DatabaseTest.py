@@ -2,17 +2,19 @@ import unittest
 from Database import Database
 
 
-class MyTestCase(unittest.TestCase):
+class DatabaseTest(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.db = Database(1, 3, 48, 14, 30, 12)
+        self.dph = 2
+        self.db = Database(self.dph, 3, 48, 30, 12, 3)
         self.db.add_data_src('data1')
 
     def test_create_database(self):
-
+        # TODO
         pass
 
     def test_load_database(self):
+        # TODO
         pass
 
     def test_add_data_raw(self):
@@ -26,59 +28,44 @@ class MyTestCase(unittest.TestCase):
             self.assertIn(i, [value for value, time in data['data1']])
 
     def test_add_data_day(self):
-        for i in range(49):
+        for i in range((48 + 1) * self.dph):
             self.db.add_data(i, 'data1')
 
         data = self.db.get_day()
 
         self.assertEqual(48, len(data['data1']))
-        for i in range(1, 49):
-            self.assertIn(i, [value for value, time in data['data1']])
-
-    def test_add_data_week(self):
-        for i in range(14 * 24 + 1):
-            self.db.add_data(i//24, 'data1')
-
-        data = self.db.get_week()
-
-        self.assertEqual(14, len(data['data1']))
-        for i in range(24):
-            self.assertIn(i//24, [value for value, time in data['data1']])
+        for i in range(1, 48 + 1):
+            self.assertIn(i * self.dph + (i * self.dph + 1), [value for value, time in data['data1']])
 
     def test_add_data_month(self):
-        for i in range(30 * 24 + 1):
-            self.db.add_data(i//24, 'data1')
+        for i in range((30 + 1) * 24 * self.dph):
+            self.db.add_data(1/self.dph, 'data1')
 
         data = self.db.get_month()
 
-        # TODO so richtig?
         self.assertEqual(30, len(data['data1']))
-        for i in range(1, 30 * 24):
-            self.assertIn(i//24, [value for value, time in data['data1']])
+        for i in range(0, 30):
+            self.assertEqual(24, [value for value, time in data['data1']][i])
 
     def test_add_data_year(self):
-        for i in range(365 * 24 + 1):
-            self.db.add_data(i, 'data1')
+        for i in range((365 + 1) * 24 * self.dph):
+            self.db.add_data(1/self.dph, 'data1')
 
         data = self.db.get_year()
 
-        # TODO so richtig?
         self.assertEqual(12, len(data['data1']))
-        for i in range(1, 365 * 24):
-            self.assertIn(i, [value for value, time in data['data1']])
+        for i in range(12):
+            self.assertEqual(720, [value for value, time in data['data1']][i])
 
     def test_add_data_years(self):
-        # TODO in schleife hinzufügen
-        # TODO nachrechnen und assertion anpassen
-        for i in range(1, 3 * 365 * 24 + 1):
-            self.db.add_data(i, 'data1')
+        for i in range(3 * 365 * 24 * self.dph):
+            self.db.add_data(1/self.dph, 'data1')
 
         data = self.db.get_years()
 
-        # TODO so richtig?
         self.assertEqual(3, len(data['data1']))
-        for i in range(1, 3 * 365 * 24):
-            self.assertIn(i, [value for value, time in data['data1']])
+        for i in range(3):
+            self.assertEqual(8760, [value for value, time in data['data1']][i])
 
 
 if __name__ == '__main__':
