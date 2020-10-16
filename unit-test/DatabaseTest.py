@@ -1,5 +1,6 @@
 import unittest
 from Database import Database
+import os
 
 
 class DatabaseTest(unittest.TestCase):
@@ -10,12 +11,20 @@ class DatabaseTest(unittest.TestCase):
         self.db.add_data_src('data1')
 
     def test_create_database(self):
-        # TODO
-        pass
+        db = Database.create_database('test.json')
 
-    def test_load_database(self):
-        # TODO
-        pass
+        self.assertIsNotNone(db)
+        self.assertTrue(os.path.exists('test.json'))
+
+    def test_save_load_database(self):
+        # Create database and save
+        db = Database.create_database('db.json')
+        db.add_data_src('data1')
+        db.add_data(123)
+        # Load data
+        db = Database.load_database('db.json')
+        # Assert
+        self.assertIn(123, db.get_raw())
 
     def test_add_data_raw(self):
 
@@ -66,6 +75,11 @@ class DatabaseTest(unittest.TestCase):
         self.assertEqual(3, len(data['data1']))
         for i in range(3):
             self.assertEqual(8760, [value for value, time in data['data1']][i])
+
+    def test_remove_datasource(self):
+        self.assertIn('data1', self.db.get_raw().keys())
+        self.db.remove_data_src('data1')
+        self.assertNotIn('data1', self.db.get_raw().keys())
 
 
 if __name__ == '__main__':
