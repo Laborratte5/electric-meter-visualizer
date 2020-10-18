@@ -1,3 +1,4 @@
+import datetime
 import unittest
 from Database import Database
 import os
@@ -38,6 +39,8 @@ class DatabaseTest(unittest.TestCase):
         self.assertEqual(12, db.keep_year)
         self.assertEqual(3, db.keep_years)
         self.assertIn(123, [value for value, timestamp in db.get_raw()['data1']])
+        self.assertNotEqual(0, len([timestamp for value, timestamp in db.get_raw()['data1']]))
+        self.assertEqual(type(datetime.datetime.now()), type([timestamp for value, timestamp in db.get_raw()['data1']][0]))
 
     def test_add_data_raw(self):
 

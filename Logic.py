@@ -1,6 +1,5 @@
 import threading
 import time
-from datetime import datetime, timedelta
 
 from ElectricMeter import ElectricMeter
 from ElectricMeterMockup import ElectricMeterMockup
@@ -8,8 +7,6 @@ import os
 import schedule
 
 from Database import Database
-from Database import RoundRobinArchive as RRA
-from Database import Datasource as DS
 
 
 def _run_scheduler():
@@ -24,60 +21,35 @@ class Logic:
         self.development = development
         self.next_id = 0  # TODO letzte id aus datei laden
         self.electric_meters = {}  # TODO aus datei laden
-        self.datasource_electric_meter_mapping = {}  # TODO aus datei laden
-        self.datasources = []  # TODO aus datei laden
         self.config = {}  # TODO aus config laden
 
-        self.db_step = 900  # 15min. # TODO step vllt aus config laden
+        # TODO aus config laden
+        database_file = 'database.json'
+        self.data_per_hour = 3600
 
-        database_file = 'data.rrd'
         if os.path.isfile(database_file):
-            self.database = Database.load(database_file)
+            #pass
+
+            # TODO
+            self.database = Database.load_database(database_file)
+            print('database file exists')
         else:
-            # Time/step values for rrd
-            hourly = 3600 / self.db_step
-            daily = 24 * hourly
-            weekly = 7 * daily
-            yearly = ((3 * 365 + 366) / 4) * daily
-            monthly = yearly / 12
-
+            print('database file doesnt exist')
             # TODO aus config laden
-            keep_steps = 96
-            keep_daily = 7
-            keep_weekly = 4
-            keep_monthly = 12
-            keep_yearly = 3
-
-            xff = 0.5
-
-            rras = [RRA('LAST', xff, 1, keep_steps),
-                    # Average RRA
-                    RRA('AVERAGE', xff, daily, keep_daily),
-                    RRA('AVERAGE', xff, weekly, keep_weekly),
-                    RRA('AVERAGE', xff, monthly, keep_monthly),
-                    RRA('AVERAGE', xff, yearly, keep_yearly),
-                    # Min RRA
-                    RRA('MIN', xff, daily, keep_daily),
-                    RRA('MIN', xff, weekly, keep_weekly),
-                    RRA('MIN', xff, monthly, keep_monthly),
-                    RRA('MIN', xff, yearly, keep_yearly),
-                    # Max RRA
-                    RRA('MAX', xff, daily, keep_daily),
-                    RRA('MAX', xff, weekly, keep_weekly),
-                    RRA('MAX', xff, monthly, keep_monthly),
-                    RRA('MAX', xff, yearly, keep_yearly)]
-            # TODO nochmal nachdenken ob so wirklich richtige gespeichert wird
-
+            self.keep_raw = 10
+            self.keep_day = 48
+            self.keep_month = 30
+            self.keep_year = 12
+            self.keep_years = 3
             # Create Database
-            dummy_data_source = DS('DUMMY', 'GAUGE', 2 * self.db_step)
-            self.database = Database.create(database_file, self.db_step, dummy_data_source, rras)
+            self.database = Database.create_database(database_file, self.data_per_hour, self.keep_raw, self.keep_day,
+                                                     self.keep_month, self.keep_year, self.keep_years)
 
         # Timer to read electric_meters every db_step
-        schedule.every(self.db_step).seconds.do(self._read_electric_meters)
+        schedule.every(3600/self.data_per_hour).seconds.do(self._read_electric_meters)
         schedule_thread = threading.Thread(target=_run_scheduler)
         schedule_thread.setDaemon(True)
         schedule_thread.start()
-        # TODO schedule run_pending()
 
     # Electric Meter API
 
@@ -91,27 +63,15 @@ class Logic:
         self.electric_meters[self.next_id] = new_meter
 
         # Add Datasource to Database
-        new_datasource = DS(name, 'GAUGE', self.db_step*2, min=0)
-        self.database.add_data_source(new_datasource)
-        self.datasource_electric_meter_mapping[new_datasource] = new_meter
-        self.datasources.append(new_datasource)
+        self.database.add_data_src(self.next_id)
 
         return new_meter, self.next_id
 
     def remove_electric_meter(self, id):
         removed_meter = self.electric_meters[id]
-        removed_datasource = None
-        # Get removed datasource
-        for datasource in self.datasources:
-            em = self.datasource_electric_meter_mapping[datasource]
-            if self.datasource_electric_meter_mapping[datasource] is removed_meter:
-                removed_datasource = datasource
-                break
-
-        # Remove Datasource Mapping
-        self.database.remove_data_source(removed_datasource)
-        self.datasources.remove(removed_datasource)
-        del self.datasource_electric_meter_mapping[removed_datasource]
+        # Remove datasource
+        self.database.remove_data_src(id)
+        # Remove Electric meter
         del self.electric_meters[id]
 
         return removed_meter
@@ -141,14 +101,33 @@ class Logic:
         return electric_meter
 
     def _read_electric_meters(self):
-        data_list = []
-        for datasource in self.datasources:
-            electric_meter = self.datasource_electric_meter_mapping[datasource]
-            power_usage = electric_meter.get_amount()
-            data_list.append(power_usage)
+        for id, electric_meter in self.electric_meters.items():
+            value = electric_meter.get_amount()
+            self.database.add_data(value, id)
             electric_meter.reset()
 
-        data_list.insert(0, 0)  # Insert data dummy
-        # Add data_list to database
-        self.database.add_data(data_list)
-        pass
+    # Data API
+    # TODO t_minus
+    def get_raw(self):
+        return self.database.get_raw().items()
+
+    def get_day(self, t_minus=0):
+        data = self.database.get_day().items()
+
+        return data
+
+    def get_week(self, t_minus=0):
+        # TODO
+        data = self.database.get_month().items()
+
+        return data
+
+    def get_month(self, t_minus=0):
+        return self.database.get_month()
+
+    def get_year(self, t_minus=0):
+        return self.database.get_year()
+
+    def get_years(self):
+        return self.database.get_years()
+    # TODO

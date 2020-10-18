@@ -23,6 +23,11 @@ def index():
 def data():
     return 'data'
 
+@app.route('/api/json/data/raw')
+def raw_data():
+    data = logic.get_raw()
+    return dict(data)
+
 @app.route('/api/json/data/day')
 def day_data():
     # TODO convert dict to dict better suitable for chart.js
