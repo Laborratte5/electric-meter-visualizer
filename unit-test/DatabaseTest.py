@@ -38,9 +38,11 @@ class DatabaseTest(unittest.TestCase):
         self.assertEqual(30, db.keep_month)
         self.assertEqual(12, db.keep_year)
         self.assertEqual(3, db.keep_years)
-        self.assertIn(123, [value for value, timestamp in db.get_raw()['data1']])
+        self.assertIn(123, [items['value'] for items in db.get_raw()['data1']])
         self.assertNotEqual(0, len([timestamp for value, timestamp in db.get_raw()['data1']]))
-        self.assertEqual(type(datetime.datetime.now()), type([timestamp for value, timestamp in db.get_raw()['data1']][0]))
+        # TODO vllt. bessere/schönere Art and timestamp zu kommen
+        self.assertEqual(type(datetime.datetime.now()), type([item['timestamp'] for item in db.get_raw()['data1']][0]))
+
 
     def test_add_data_raw(self):
 
@@ -50,7 +52,7 @@ class DatabaseTest(unittest.TestCase):
         data = self.db.get_raw()
         self.assertEqual(3, len(data['data1']))
         for i in range(2, 5):
-            self.assertIn(i, [value for value, time in data['data1']])
+            self.assertIn(i, [items['value'] for items in data['data1']])
 
     def test_add_data_day(self):
         for i in range((48 + 1) * self.dph):
@@ -60,7 +62,7 @@ class DatabaseTest(unittest.TestCase):
 
         self.assertEqual(48, len(data['data1']))
         for i in range(1, 48 + 1):
-            self.assertIn(i * self.dph + (i * self.dph + 1), [value for value, time in data['data1']])
+            self.assertIn(i * self.dph + (i * self.dph + 1), [items['value'] for items in data['data1']])
 
     def test_add_data_month(self):
         for i in range((30 + 1) * 24 * self.dph):
@@ -70,7 +72,7 @@ class DatabaseTest(unittest.TestCase):
 
         self.assertEqual(30, len(data['data1']))
         for i in range(0, 30):
-            self.assertEqual(24, [value for value, time in data['data1']][i])
+            self.assertEqual(24, [items['value'] for items in data['data1']][i])
 
     def test_add_data_year(self):
         for i in range((365 + 1) * 24 * self.dph):
@@ -80,7 +82,7 @@ class DatabaseTest(unittest.TestCase):
 
         self.assertEqual(12, len(data['data1']))
         for i in range(12):
-            self.assertEqual(720, [value for value, time in data['data1']][i])
+            self.assertEqual(720, [items['value'] for items in data['data1']][i])
 
     def test_add_data_years(self):
         for i in range(3 * 365 * 24 * self.dph):
@@ -90,7 +92,7 @@ class DatabaseTest(unittest.TestCase):
 
         self.assertEqual(3, len(data['data1']))
         for i in range(3):
-            self.assertEqual(8760, [value for value, time in data['data1']][i])
+            self.assertEqual(8760, [items['value'] for items in data['data1']][i])
 
     def test_remove_datasource(self):
         self.assertIn('data1', self.db.get_raw().keys())
