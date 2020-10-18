@@ -7,24 +7,37 @@ class DatabaseTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.dph = 2
-        self.db = Database(self.dph, 3, 48, 30, 12, 3)
+        with open('test.json', 'w') as f:
+            f.write('x')
+        self.db = Database('test.json', self.dph, 3, 48, 30, 12, 3)
         self.db.add_data_src('data1')
+        self.db.sync_file = False
 
     def test_create_database(self):
-        db = Database.create_database('test.json')
+        db = Database.create_database('test.json', self.dph, 3, 48, 30, 12, 3)
 
         self.assertIsNotNone(db)
         self.assertTrue(os.path.exists('test.json'))
 
     def test_save_load_database(self):
         # Create database and save
-        db = Database.create_database('db.json')
+        db = Database.create_database('test.json', self.dph, 3, 48, 30, 12, 3)
+        db.sync_file = True
+        db.add_data_src('test')
         db.add_data_src('data1')
-        db.add_data(123)
+        db.add_data(123, 'data1')
         # Load data
-        db = Database.load_database('db.json')
+        db = Database.load_database('test.json')
         # Assert
-        self.assertIn(123, db.get_raw())
+        self.assertIn('data1', db.datasources.keys())
+        self.assertIn('test', db.datasources.keys())
+        self.assertEqual(self.dph, db.dph)
+        self.assertEqual(3, db.keep_raw)
+        self.assertEqual(48, db.keep_day)
+        self.assertEqual(30, db.keep_month)
+        self.assertEqual(12, db.keep_year)
+        self.assertEqual(3, db.keep_years)
+        self.assertIn(123, [value for value, timestamp in db.get_raw()['data1']])
 
     def test_add_data_raw(self):
 
