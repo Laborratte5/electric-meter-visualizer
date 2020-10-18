@@ -181,7 +181,7 @@ class DatabaseJsonEncoder(json.JSONEncoder):
             'keep_year': db.keep_year,
             'keep_years': db.keep_years,
             'data_sources': [{
-                'name': name,
+                'id': name,
                 'data': data
                 } for name, data in db.datasources.items()]
         }
@@ -227,7 +227,7 @@ class DatabaseJsonDecoder:
                    for i in o.keys())
 
     def is_datasource(self, o):
-        return all(i in ('name', 'data') for i in o.keys())
+        return all(i in ('id', 'data') for i in o.keys())
 
     def is_data(self, o):
         return all(i in ('day_counter',  'month_counter',  'year_counter',  'years_counter',  'day_sum',  'month_sum',
@@ -269,7 +269,7 @@ class DatabaseJsonDecoder:
         return database
 
     def decode_datasource(self, datasource_dict):
-        name = datasource_dict['name']
+        name = datasource_dict['id']
         data = datasource_dict['data']
         self.datasources[name] = data
         return {name: data}
