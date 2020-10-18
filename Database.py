@@ -3,9 +3,11 @@ from datetime import datetime
 
 class Database:
     @classmethod
-    def create_database(cls):
-        # TODO
-        pass
+    def create_database(cls, file_name, data_per_hour, keep_raw, keep_day, keep_month, keep_year, keep_years):
+        with open(file_name, 'w') as f:
+            f.close()
+        database = Database(file_name, data_per_hour, keep_raw, keep_day, keep_month, keep_year, keep_years)
+        return database
 
     @classmethod
     def load_database(cls):
