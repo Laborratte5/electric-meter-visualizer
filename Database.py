@@ -116,7 +116,7 @@ class Archive:
         self.years_counter += 1
         self.years_sum += data
 
-        timestamp = datetime.now().timestamp()
+        timestamp = datetime.now()
 
         # Add raw
         self.raw.append((data, timestamp))
@@ -212,6 +212,9 @@ class DatabaseJsonEncoder(json.JSONEncoder):
         elif isinstance(o, Archive):
             # Archive to dict
             return self.encode_archive(o)
+        elif isinstance(o, datetime):
+            # Datetime to string
+            return o.isoformat()
         else:
             return json.JSONEncoder.default(self, o)
 
@@ -294,7 +297,7 @@ class DatabaseJsonDecoder:
         return a
 
     def decode_data_to_tuple(self, data_list):
-        return [(value, timestamp) for value, timestamp in data_list]
+        return [(value, datetime.fromisoformat(timestamp)) for value, timestamp in data_list]
 
     # TODO decode json
     def decode(self, o):
