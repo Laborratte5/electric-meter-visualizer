@@ -56,23 +56,28 @@ class Database:
     # TODO delta
     def get_raw(self, delta=0):
         # get data for each datasource and put it in a dict
-        return {data_src: data.get_raw() for data_src, data in self.datasources.items()}
+        return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_raw()]
+                for data_src, data in self.datasources.items()}
 
     def get_day(self, delta=0):
         # get data for each datasource and put it in a dict
-        return {data_src: data.get_day() for data_src, data in self.datasources.items()}
+        return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_day()]
+                for data_src, data in self.datasources.items()}
 
     def get_month(self, delta=0):
         # get data for each datasource and put it in a dict
-        return {data_src: data.get_month() for data_src, data in self.datasources.items()}
+        return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_month()]
+                for data_src, data in self.datasources.items()}
 
     def get_year(self, delta=0):
         # get data for each datasource and put it in a dict
-        return {data_src: data.get_year() for data_src, data in self.datasources.items()}
+        return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_year()]
+                for data_src, data in self.datasources.items()}
 
     def get_years(self, delta=0):
         # get data for each datasource and put it in a dict
-        return {data_src: data.get_years() for data_src, data in self.datasources.items()}
+        return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_years()]
+                for data_src, data in self.datasources.items()}
 
 
 class Archive:
@@ -299,16 +304,15 @@ class DatabaseJsonDecoder:
     def decode_data_to_tuple(self, data_list):
         return [(value, datetime.fromisoformat(timestamp)) for value, timestamp in data_list]
 
-    # TODO decode json
     def decode(self, o):
         if self.is_data(o):
-            # TODO deserialize data
+            # deserialize data
             return self.decode_data(o)
         elif self.is_datasource(o):
-            # TODO deserialize datasource
+            # deserialize datasource
             return self.decode_datasource(o)
         elif self.is_database(o):
-            # TODO deserialize database
+            # deserialize database
             return self.decode_database(o)
         else:
             pass
