@@ -163,16 +163,16 @@ class Archive:
         return self.raw
 
     def get_day(self, delta=0):
-        return self.day
+        return self.day + [(self.day_sum, datetime.now())]
 
     def get_month(self, delta=0):
-        return self.month
+        return self.month + [(self.month_sum, datetime.now())]
 
     def get_year(self, delta=0):
-        return self.year
+        return self.year + [(self.year_sum, datetime.now())]
 
     def get_years(self, delta=0):
-        return self.years
+        return self.years + [(self.years_sum, datetime.now())]
 
 
 class DatabaseJsonEncoder(json.JSONEncoder):

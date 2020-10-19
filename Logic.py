@@ -28,13 +28,8 @@ class Logic:
         self.data_per_hour = 3600
 
         if os.path.isfile(database_file):
-            #pass
-
-            # TODO
             self.database = Database.load_database(database_file)
-            print('database file exists')
         else:
-            print('database file doesnt exist')
             # TODO aus config laden
             self.keep_raw = 10
             self.keep_day = 48
@@ -109,12 +104,10 @@ class Logic:
     # Data API
     # TODO t_minus
     def get_raw(self):
-        return self.database.get_raw().items()
+        return {self.electric_meters[datasource].name: data for datasource, data in self.database.get_raw().items()}
 
     def get_day(self, t_minus=0):
-        data = self.database.get_day().items()
-
-        return data
+        return {self.electric_meters[datasource].name: data for datasource, data in self.database.get_day().items()}
 
     def get_week(self, t_minus=0):
         # TODO
@@ -123,11 +116,11 @@ class Logic:
         return data
 
     def get_month(self, t_minus=0):
-        return self.database.get_month()
+        return {self.electric_meters[datasource].name: data for datasource, data in self.database.get_month().items()}
 
     def get_year(self, t_minus=0):
-        return self.database.get_year()
+        return {self.electric_meters[datasource].name: data for datasource, data in self.database.get_year().items()}
 
     def get_years(self):
-        return self.database.get_years()
-    # TODO
+        return {self.electric_meters[datasource].name: data for datasource, data in self.database.get_years().items()}
+# TODO

@@ -44,15 +44,25 @@ def week_data():
 
 @app.route('/api/json/data/month')
 def month_data():
-    return 'month data'
+    if 't' in request.args.keys():
+        t_minus = int(request.args['t'])
+        data = logic.get_month(t_minus)
+    else:
+        data = logic.get_month()
+    return dict(data)
 
 @app.route('/api/json/data/year')
 def year_data():
-    return 'year data'
-
+    if 't' in request.args.keys():
+        t_minus = int(request.args['t'])
+        data = logic.get_year(t_minus)
+    else:
+        data = logic.get_year()
+    return dict(data)
 @app.route('/api/json/data/years')
 def years_data():
-    return 'years data'
+    data = logic.get_years()
+    return dict(data)
 
 # Electric meter API
 # TODO test

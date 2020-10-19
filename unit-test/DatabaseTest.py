@@ -60,7 +60,7 @@ class DatabaseTest(unittest.TestCase):
 
         data = self.db.get_day()
 
-        self.assertEqual(48, len(data['data1']))
+        self.assertEqual(48 + 1, len(data['data1']))
         for i in range(1, 48 + 1):
             self.assertIn(i * self.dph + (i * self.dph + 1), [items['value'] for items in data['data1']])
 
@@ -70,7 +70,7 @@ class DatabaseTest(unittest.TestCase):
 
         data = self.db.get_month()
 
-        self.assertEqual(30, len(data['data1']))
+        self.assertEqual(30 + 1, len(data['data1']))
         for i in range(0, 30):
             self.assertEqual(24, [items['value'] for items in data['data1']][i])
 
@@ -80,7 +80,7 @@ class DatabaseTest(unittest.TestCase):
 
         data = self.db.get_year()
 
-        self.assertEqual(12, len(data['data1']))
+        self.assertEqual(12 + 1, len(data['data1']))
         for i in range(12):
             self.assertEqual(720, [items['value'] for items in data['data1']][i])
 
@@ -90,7 +90,7 @@ class DatabaseTest(unittest.TestCase):
 
         data = self.db.get_years()
 
-        self.assertEqual(3, len(data['data1']))
+        self.assertEqual(3 + 1, len(data['data1']))
         for i in range(3):
             self.assertEqual(8760, [items['value'] for items in data['data1']][i])
 
