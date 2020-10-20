@@ -14,19 +14,23 @@ api_codes = {"missing_parameter": 100,
              "no_electric_meter_id": 400
              }
 
+
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 # Data API
 @app.route('/api/json/data')
 def data():
     return 'data'
 
+
 @app.route('/api/json/data/raw')
 def raw_data():
     data = logic.get_raw()
     return dict(data)
+
 
 @app.route('/api/json/data/day')
 def day_data():
@@ -38,9 +42,11 @@ def day_data():
         data = logic.get_day()
     return dict(data)
 
+
 @app.route('/api/json/data/week')
 def week_data():
     return 'week data'
+
 
 @app.route('/api/json/data/month')
 def month_data():
@@ -51,6 +57,7 @@ def month_data():
         data = logic.get_month()
     return dict(data)
 
+
 @app.route('/api/json/data/year')
 def year_data():
     if 't' in request.args.keys():
@@ -59,10 +66,13 @@ def year_data():
     else:
         data = logic.get_year()
     return dict(data)
+
+
 @app.route('/api/json/data/years')
 def years_data():
     data = logic.get_years()
     return dict(data)
+
 
 # Electric meter API
 # TODO test
@@ -89,6 +99,7 @@ def electric_meter():
         return {
             "electric-meters": electric_meters_json
         }
+
 
 @app.route('/api/json/electric-meter/add')
 def add_electric_meter():
@@ -124,10 +135,11 @@ def add_electric_meter():
     # Add new electric meter
     new_meter, id = logic.add_electric_meter(value, pin, active_low=active_low, name=name)
     json_response = {
-                    "id": id,
-                    "new_meter": electric_meter_to_dic(new_meter)
-                    }
+        "id": id,
+        "new_meter": electric_meter_to_dic(new_meter)
+    }
     return json_response
+
 
 @app.route('/api/json/electric-meter/remove')
 def remove_electric_meter():
@@ -141,6 +153,7 @@ def remove_electric_meter():
     #
     except KeyError as e:
         abort_no_electric_meter_with_id(id)
+
 
 @app.route('/api/json/electric-meter/change')
 def change_electric_meter():
