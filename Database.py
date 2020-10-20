@@ -36,16 +36,12 @@ class Database:
         self._save_database()
 
     def remove_data_src(self, data_src_name):
-        # TODO
         del self.datasources[data_src_name]
         self._save_database()
-        pass
 
     def add_data(self, data, data_src):
-        #TODO
         self.datasources[data_src].add_data(data)
         self._save_database()
-        pass
 
     def _save_database(self):
         if self.sync_file:
@@ -301,6 +297,7 @@ class DatabaseJsonDecoder:
         a.years = self.decode_data_to_tuple(data_dict['years_data'])
         return a
 
+    # Convert json list into python tuple
     def decode_data_to_tuple(self, data_list):
         return [(value, datetime.fromisoformat(timestamp)) for value, timestamp in data_list]
 
@@ -315,5 +312,4 @@ class DatabaseJsonDecoder:
             # deserialize database
             return self.decode_database(o)
         else:
-            pass
-            # TODO Error cannot decode
+            raise ValueError('Error decoding database file')
