@@ -4,6 +4,11 @@ from Database import Database
 import os
 
 
+def cleanup() -> None:
+    if os.path.isfile('test.json'):
+        os.remove('test.json')
+
+
 class DatabaseTest(unittest.TestCase):
 
     def setUp(self) -> None:
@@ -13,6 +18,7 @@ class DatabaseTest(unittest.TestCase):
         self.db = Database('test.json', self.dph, 3, 48, 30, 12, 3)
         self.db.add_data_src('data1')
         self.db.sync_file = False
+        self.addCleanup(cleanup)
 
     def test_create_database(self):
         db = Database.create_database('test.json', self.dph, 3, 48, 30, 12, 3)
