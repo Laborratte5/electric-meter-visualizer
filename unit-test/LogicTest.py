@@ -6,42 +6,63 @@ from ElectricMeterMockup import ElectricMeterMockup
 from Logic import Logic
 
 
-# TODO überarbeiten (Logik mit neuer Datenbank)
-class DatabaseMock:
+class DatabaseLogicTestMock:
 
     def __init__(self):
-        pass
+        self.data_sources = {}
 
     def add_data_src(self, data_src_name):
-        pass
+        self.data_sources[data_src_name] = []
 
     def remove_data_src(self, data_src_name):
-        pass
+        del self.data_sources[data_src_name]
 
     def add_data(self, data, data_src):
-        pass
+        self.data_sources[data_src].append(data)
 
     def get_raw(self, delta=0):
-        pass
+        return self.data_sources
+
+
+class DatabaseLogicGetTestMock:
+
+    def get_raw(self, delta=0):
+        return []
 
     def get_day(self, delta=0):
-        pass
+        return []
 
     def get_month(self, delta=0):
-        pass
+        return []
 
     def get_year(self, delta=0):
-        pass
+        return []
 
     def get_years(self, delta=0):
+        return []
+
+
+class ElectricMeterTestMock:
+
+    def __init__(self, amount=0):
+        self.amount = amount
+
+    def set_amount(self, amount):
+        self.amount = amount
+
+    def get_amount(self):
+        return self.amount
+
+    def reset(self):
         pass
 
 
+# Test every method in Logic except get_dataXY() methods
 class LogicTest(unittest.TestCase):
 
     def setUp(self):
         self.logic = Logic(True)
-        self.db_mock = DatabaseMock()
+        self.db_mock = DatabaseLogicTestMock()
         self.logic.database = self.db_mock
 
     def test_add_electric_meter(self):
@@ -71,7 +92,8 @@ class LogicTest(unittest.TestCase):
         electric_meter_id = 0
         electric_meter = ElectricMeterMockup(1, 1, False, 'electric meter to be removed')
         self.logic.electric_meters[electric_meter_id] = electric_meter
-        self.logic._next_id = electric_meter_id + 1
+        self.logic._next_id = electric_meter_id
+        self.db_mock.add_data_src(electric_meter_id)
 
         pre_remove_len = len(self.logic.electric_meters)
         # Remove electric meter
@@ -88,7 +110,7 @@ class LogicTest(unittest.TestCase):
         electric_meter = ElectricMeterMockup(10, 0, False, 'em1')
         electric_meter_id = 10
         self.logic.electric_meters[electric_meter_id] = electric_meter
-        self.logic._next_id = electric_meter_id + 1
+        self.logic._next_id = electric_meter_id
 
         # Change Electric Meter
         self.logic.change_electric_meter(electric_meter_id, 100, 500, True, 'changed_em1')
@@ -101,10 +123,32 @@ class LogicTest(unittest.TestCase):
         self.assertEqual(em.name, 'changed_em1')
 
     def test_read_electric_meters(self):
-        # TODO
-        # _read_electric_meters fragt alle electric meter ab und speichert deren Werte in die Datenbank
-        self.assertTrue(False)
-        pass
+        # Setup Electric Meter
+        em1_id = 0
+        em2_id = 1
+        em1 = ElectricMeterTestMock(amount=1)
+        em2 = ElectricMeterTestMock(amount=10)
+        self.logic.electric_meters[em1_id] = em1
+        self.logic.electric_meters[em2_id] = em2
+        self.logic._next_id = 1
+        # Setup Database
+        self.db_mock.add_data_src(em1_id)
+        self.db_mock.add_data_src(em2_id)
+
+        # Test _read_electric_meters()
+        for i in range(10):
+            em1.set_amount(i)
+            em2.set_amount(i*10)
+            self.logic._read_electric_meters()
+
+        # Assert database values
+        for i in range(10):
+            self.assertIn(i, self.db_mock.get_raw()[em1_id])
+            self.assertIn(i*10, self.db_mock.get_raw()[em2_id])
+
+
+# Only test get_dataXY() methods
+class LogicGetTest(unittest.TestCase):
 
     def test_get_raw(self):
         # TODO
