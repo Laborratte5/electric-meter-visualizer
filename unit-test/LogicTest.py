@@ -1,6 +1,7 @@
 import string
 import unittest
 import random
+from datetime import datetime
 
 from ElectricMeterMockup import ElectricMeterMockup
 from Logic import Logic
@@ -25,21 +26,36 @@ class DatabaseLogicTestMock:
 
 
 class DatabaseLogicGetTestMock:
+    # TODO return {data_src: [{'value': value, 'timestamp': timestamp}] }
 
     def get_raw(self, delta=0):
-        return []
+        return {'ds1': [{'value': 1, 'timestamp': datetime(2020, 10, 30, 12, 00)},
+                        {'value': 1, 'timestamp': datetime(2020, 10, 30, 12, 15)},
+                        {'value': 1, 'timestamp': datetime(2020, 10, 30, 12, 30)},
+                        {'value': 1, 'timestamp': datetime(2020, 10, 30, 12, 45)},
+
+                        {'value': 2, 'timestamp': datetime(2020, 10, 30, 13, 00)},
+                        {'value': 2, 'timestamp': datetime(2020, 10, 30, 13, 15)},
+                        {'value': 2, 'timestamp': datetime(2020, 10, 30, 13, 30)},
+                        {'value': 2, 'timestamp': datetime(2020, 10, 30, 13, 45)},
+                        ]}
 
     def get_day(self, delta=0):
-        return []
+        return {'ds1': [{'value': hour * 10, 'timestamp': datetime(2020, 10, hour//24 + 1, hour % 24, 00)}
+                        for hour in range(48)]}
 
     def get_month(self, delta=0):
-        return []
+        # Start with March to skip February because of 28 day instead of 30 or 31
+        return {'ds1': [{'value': day * 10, 'timestamp': datetime(2020, day//30 + 3, day % 30 + 1, 00, 00)}
+                        for day in range(60)]}
 
     def get_year(self, delta=0):
-        return []
+        return {'ds1': [{'value': month * 10, 'timestamp': datetime(2020, month + 1, 1, 00, 00)}
+                        for month in range(12)]}
 
     def get_years(self, delta=0):
-        return []
+        return {'ds1': [{'value': year * 10, 'timestamp': datetime(year + 1, 1, 1, 00, 00)}
+                        for year in range(3)]}
 
 
 class ElectricMeterTestMock:
@@ -149,6 +165,11 @@ class LogicTest(unittest.TestCase):
 
 # Only test get_dataXY() methods
 class LogicGetTest(unittest.TestCase):
+
+    def setUp(self):
+        self.logic = Logic(True)
+        self.db_mock = DatabaseLogicGetTestMock()
+        self.logic.database = self.db_mock
 
     def test_get_raw(self):
         # TODO
