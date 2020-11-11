@@ -192,7 +192,7 @@ class RemoveElectricMeterTest(unittest.TestCase):
     def test_electric_meter_remove_missing_parameter(self):
         response = self.app.get(self.api_url)
         obj = json.loads(response.data)
-        self.assertEquals(["id"], obj['parameters'])
+        self.assertEqual(["id"], obj['parameters'])
 
     def test_electric_meter_remove_invalid_parameter_type(self):
         response = self.app.get(self.api_url + '?id=X')
@@ -203,8 +203,8 @@ class RemoveElectricMeterTest(unittest.TestCase):
         invalid_id = -1
         response = self.app.get(self.api_url + '?id=' + str(invalid_id))
         obj = json.loads(response.data)
-        self.assertEquals(400, obj['code'])
-        self.assertEquals(invalid_id, obj['id'])
+        self.assertEqual(400, obj['code'])
+        self.assertEqual(invalid_id, obj['id'])
 
 
 class ChangeElectricMeterTest(unittest.TestCase):

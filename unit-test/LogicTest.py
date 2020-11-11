@@ -26,10 +26,9 @@ class DatabaseLogicTestMock:
 
 
 class DatabaseLogicGetTestMock:
-    # TODO return {data_src: [{'value': value, 'timestamp': timestamp}] }
 
     def get_raw(self, delta=0):
-        return {'ds1': [{'value': 1, 'timestamp': datetime(2020, 10, 30, 12, 00)},
+        return {1: [{'value': 1, 'timestamp': datetime(2020, 10, 30, 12, 00)},
                         {'value': 1, 'timestamp': datetime(2020, 10, 30, 12, 15)},
                         {'value': 1, 'timestamp': datetime(2020, 10, 30, 12, 30)},
                         {'value': 1, 'timestamp': datetime(2020, 10, 30, 12, 45)},
@@ -41,21 +40,21 @@ class DatabaseLogicGetTestMock:
                         ]}
 
     def get_day(self, delta=0):
-        return {'ds1': [{'value': hour * 10, 'timestamp': datetime(2020, 10, hour//24 + 1, hour % 24, 00)}
-                        for hour in range(48)]}
+        return {1: [{'value': hour * 10, 'timestamp': datetime(2020, 10, hour//24 + 1, hour % 24, 00)}
+                    for hour in range(48)]}
 
     def get_month(self, delta=0):
         # Start with March to skip February because of 28 day instead of 30 or 31
-        return {'ds1': [{'value': day * 10, 'timestamp': datetime(2020, day//30 + 3, day % 30 + 1, 00, 00)}
-                        for day in range(60)]}
+        return {1: [{'value': day * 10, 'timestamp': datetime(2020, day//30 + 3, day % 30 + 1, 00, 00)}
+                    for day in range(60)]}
 
     def get_year(self, delta=0):
-        return {'ds1': [{'value': month * 10, 'timestamp': datetime(2020, month + 1, 1, 00, 00)}
+        return {1: [{'value': month * 10, 'timestamp': datetime(2020, month + 1, 1, 00, 00)}
                         for month in range(12)]}
 
     def get_years(self, delta=0):
-        return {'ds1': [{'value': year * 10, 'timestamp': datetime(year + 1, 1, 1, 00, 00)}
-                        for year in range(3)]}
+        return {1: [{'value': year * 10, 'timestamp': datetime(year + 1, 1, 1, 00, 00)}
+                    for year in range(3)]}
 
 
 class ElectricMeterTestMock:
@@ -168,22 +167,31 @@ class LogicGetTest(unittest.TestCase):
 
     def setUp(self):
         self.logic = Logic(True)
+        self.electric_meter_name = 'em1'
+        self.logic.add_electric_meter(1, 1, False, self.electric_meter_name)
         self.db_mock = DatabaseLogicGetTestMock()
         self.logic.database = self.db_mock
 
     def test_get_raw(self):
-        # TODO
-        self.assertTrue(False)
-        pass
+        raw = self.logic.get_raw()
+
+        # Assertion
+        self.assertIn(self.electric_meter_name, raw.keys())
+        for idx, data_point in enumerate(raw[self.electric_meter_name]):
+            self.assertEqual(data_point['value'], self.db_mock.get_raw()[1][idx]['value'])
+            self.assertEqual(data_point['timestamp'], self.db_mock.get_raw()[1][idx]['timestamp'])
 
     def test_get_day(self):
-        # TODO
-        self.assertTrue(False)
-        pass
+        day = self.logic.get_day()
+
+        # Assertion
+        self.assertIn(self.electric_meter_name, day.keys())
+        for idx, data_point in enumerate(day[self.electric_meter_name]):
+            self.assertEqual(data_point['value'], self.db_mock.get_day()[1][idx]['value'])
+            self.assertEqual(data_point['timestamp'], self.db_mock.get_day()[1][idx]['timestamp'])
 
     def test_get_week(self):
         # TODO
-        self.assertTrue(False)
         pass
 
     def test_get_month(self):
