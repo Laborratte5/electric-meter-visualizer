@@ -1,6 +1,8 @@
 import threading
 import time
+from datetime import datetime, timedelta
 
+from ConfigLoader import Config
 from ElectricMeter import ElectricMeter
 from ElectricMeterMockup import ElectricMeterMockup
 import os
@@ -18,24 +20,22 @@ def _run_scheduler():
 class Logic:
 
     def __init__(self, development):
+        config = Config()  # TODO
         self.development = development
-        self.next_id = 0  # TODO letzte id aus datei laden
-        self.electric_meters = {}  # TODO aus datei laden
-        self.config = {}  # TODO aus config laden
+        self._next_id = config.get_next_id()
+        self.electric_meters = config.get_electric_meters()
 
-        # TODO aus config laden
-        database_file = 'database.json'
-        self.data_per_hour = 3600
+        database_file = config.get_database_file()
+        self.data_per_hour = config.get_data_per_hour()
 
         if os.path.isfile(database_file):
             self.database = Database.load_database(database_file)
         else:
-            # TODO aus config laden
-            self.keep_raw = 10
-            self.keep_day = 48
-            self.keep_month = 30
-            self.keep_year = 12
-            self.keep_years = 3
+            self.keep_raw = config.get_keep_raw()
+            self.keep_day = config.get_keep_day()
+            self.keep_month = config.get_keep_month()
+            self.keep_year = config.get_keep_year()
+            self.keep_years = config.get_keep_years()
             # Create Database
             self.database = Database.create_database(database_file, self.data_per_hour, self.keep_raw, self.keep_day,
                                                      self.keep_month, self.keep_year, self.keep_years)
@@ -123,4 +123,3 @@ class Logic:
 
     def get_years(self):
         return {self.electric_meters[datasource].name: data for datasource, data in self.database.get_years().items()}
-# TODO
