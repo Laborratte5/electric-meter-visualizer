@@ -19,8 +19,7 @@ def _run_scheduler():
 
 class Logic:
 
-    def __init__(self, development):
-        config = Config()  # TODO
+    def __init__(self, config, development):
         self.development = development
         self._next_id = config.get_next_id()
         self.electric_meters = config.get_electric_meters()

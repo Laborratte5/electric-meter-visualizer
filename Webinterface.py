@@ -1,11 +1,12 @@
 from flask import Flask, render_template, request, abort, make_response, jsonify
 
+from ConfigLoader import Config
 from Logic import Logic
 
 app = Flask(__name__)
 development_mode = app.config['ENV'] == 'development'
 
-logic = Logic(development_mode)
+logic = Logic(Config.get_config(), development_mode)
 
 # TODO dokumentieren und verwenden
 api_codes = {"missing_parameter": 100,
@@ -268,5 +269,5 @@ def electric_meter_to_dic(electric_meter):
     }
 
 
-if development_mode:
-    app.run()
+#if development_mode:
+#    app.run()

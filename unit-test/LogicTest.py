@@ -7,6 +7,36 @@ from ElectricMeterMockup import ElectricMeterMockup
 from Logic import Logic
 
 
+class ConfigMock:
+
+    def get_next_id(self):
+        return 0
+
+    def get_electric_meters(self):
+        return {}
+
+    def get_database_file(self):
+        return 'database.json'
+
+    def get_data_per_hour(self):
+        return 3600
+
+    def get_keep_raw(self):
+        return 10
+
+    def get_keep_day(self):
+        return 48
+
+    def get_keep_month(self):
+        return 30
+
+    def get_keep_year(self):
+        return 12
+
+    def get_keep_years(self):
+        return 3
+
+
 class DatabaseLogicTestMock:
 
     def __init__(self):
@@ -76,7 +106,7 @@ class ElectricMeterTestMock:
 class LogicTest(unittest.TestCase):
 
     def setUp(self):
-        self.logic = Logic(True)
+        self.logic = Logic(ConfigMock(), True)
         self.db_mock = DatabaseLogicTestMock()
         self.logic.database = self.db_mock
 
@@ -166,7 +196,7 @@ class LogicTest(unittest.TestCase):
 class LogicGetTest(unittest.TestCase):
 
     def setUp(self):
-        self.logic = Logic(True)
+        self.logic = Logic(ConfigMock(), True)
         self.electric_meter_name = 'em1'
         self.logic.add_electric_meter(1, 1, False, self.electric_meter_name)
         self.db_mock = DatabaseLogicGetTestMock()
@@ -197,7 +227,6 @@ class LogicGetTest(unittest.TestCase):
         pass
 
     def test_get_month(self):
-        # TODO
         month = self.logic.get_month()
 
         # Assertion
@@ -208,7 +237,6 @@ class LogicGetTest(unittest.TestCase):
             self.assertEqual(self.db_mock.get_month()[1][idx]['timestamp'], data_point['timestamp'])
 
     def test_get_year(self):
-        # TODO
         year = self.logic.get_year()
 
         # Assertion
@@ -219,7 +247,6 @@ class LogicGetTest(unittest.TestCase):
             self.assertEqual(self.db_mock.get_year()[1][idx]['timestamp'], data_point['timestamp'])
 
     def test_get_years(self):
-        # TODO
         years = self.logic.get_years()
 
         # Assertion
