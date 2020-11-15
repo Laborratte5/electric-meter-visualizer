@@ -21,8 +21,8 @@ class Logic:
 
     def __init__(self, config, development):
         self.development = development
-        self._next_id = config.get_next_id()
-        self.electric_meters = config.get_electric_meters()
+        self._next_id = 0  # TODO Persistence
+        self.electric_meters = {}  # TODO Persistence
 
         database_file = config.get_database_file()
         self.data_per_hour = config.get_data_per_hour()
