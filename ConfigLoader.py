@@ -13,7 +13,6 @@ class Config:
     def get_config(cls):
         if cls.config is None:
             if os.path.exists(CONFIG_FILE):
-                # TODO was soll bei fehlerhafter config datei passieren
                 # Load config from file
                 config_parser = ConfigParser()
                 config_parser.read(CONFIG_FILE)

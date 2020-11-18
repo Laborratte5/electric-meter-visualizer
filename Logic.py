@@ -2,7 +2,6 @@ import threading
 import time
 from datetime import datetime, timedelta
 
-from ConfigLoader import Config
 from ElectricMeter import ElectricMeter
 from ElectricMeterMockup import ElectricMeterMockup
 import os
@@ -48,18 +47,18 @@ class Logic:
     # Electric Meter API
 
     def add_electric_meter(self, value, pin, active_low, name):
-        self.next_id += 1
+        self._next_id += 1
 
         if self.development:
             new_meter = ElectricMeterMockup(value, pin, active_low, name)
         else:
             new_meter = ElectricMeter(value, pin, active_low, name)
-        self.electric_meters[self.next_id] = new_meter
+        self.electric_meters[self._next_id] = new_meter
 
         # Add Datasource to Database
-        self.database.add_data_src(self.next_id)
+        self.database.add_data_src(self._next_id)
 
-        return new_meter, self.next_id
+        return new_meter, self._next_id
 
     def remove_electric_meter(self, id):
         removed_meter = self.electric_meters[id]
