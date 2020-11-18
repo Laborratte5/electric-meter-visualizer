@@ -59,16 +59,6 @@ class MyTestCase(unittest.TestCase):
         # Assert config file still exists
         self.assertTrue(os.path.isfile(ConfigLoader.CONFIG_FILE))
 
-        # Assert if default config was saved to file # TODO vllt doch nicht überschreiben
-        Config.config_parser = None
-        Config.config = None
-        config = Config.get_config()
-        assert_default_config(config)
-
-        # Assert config file still exists
-        self.assertTrue(os.path.isfile(ConfigLoader.CONFIG_FILE))
-        self.assertIsNotNone(config)
-
     def test_save_config(self):
         database_file = 'newfile.db'
         data_per_hour = 3600
