@@ -1,4 +1,5 @@
 import os
+import logging
 from configparser import ConfigParser
 
 CONFIG_FILE = 'config.ini'
@@ -27,9 +28,11 @@ class Config:
                     config.keep_year = int(config_parser['DATABASE']['keep-year'])
                     config.keep_years = int(config_parser['DATABASE']['keep-years'])
                 except (KeyError, ValueError) as e:
+                    # TODO print error
+                    logging.warning('Invalid config file. Using default config.')
+                    logging.exception(e)
                     # Create default config
                     config = Config(config_parser)
-                    # TODO print error
             else:
                 # Create default config
                 config_parser = ConfigParser()
@@ -66,7 +69,6 @@ class Config:
         self.keep_year = 12
         self.keep_years = 3
 
-    # TODO implement config
     def get_database_file(self):
         return self.database_file
 
