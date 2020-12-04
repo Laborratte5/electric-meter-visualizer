@@ -58,6 +58,8 @@ class Config:
         with open(CONFIG_FILE, 'w') as file:
             self.config_parser.write(file)
 
+        logging.info('config saved to %s', CONFIG_FILE)
+
     def __init__(self, config_parser):
         self.config_parser = config_parser
 
