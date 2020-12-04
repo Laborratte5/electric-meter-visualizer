@@ -13,7 +13,6 @@ class MyTestCase(unittest.TestCase):
     def setUp(self) -> None:
         if os.path.isfile(Persistence.STATE_FILE):
             os.remove(Persistence.STATE_FILE)
-        pass
 
     def test_get_state(self):
         state = State.get_state()
@@ -66,8 +65,14 @@ class MyTestCase(unittest.TestCase):
         pass
 
     def test_load_missing_file(self):
-        # TODO
-        pass
+        # Test
+        state = State.get_state()
+
+        # Assert
+        self.assertIsNotNone(state)
+        self.assertIsNotNone(state.get_next_id())
+        self.assertIsNotNone(state.get_electric_meters())
+        self.assertEqual(len(state.get_electric_meters()), 0)
 
 
 if __name__ == '__main__':
