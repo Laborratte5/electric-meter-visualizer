@@ -22,3 +22,7 @@ class State:
 
     def set_electric_meters(self, electric_meters):
         pass
+
+
+class InvalidStateFileException(Exception):
+    pass
