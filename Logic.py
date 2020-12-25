@@ -45,7 +45,6 @@ class Logic:
         schedule_thread.start()
 
     # Electric Meter API
-
     def add_electric_meter(self, value, pin, active_low, name):
         self._next_id += 1
 
@@ -76,20 +75,16 @@ class Logic:
         return self.electric_meters.items()
 
     def change_electric_meter(self, id, value=None, pin=None, active_low=None, name=None):
-        # TODO
-        try:
-            electric_meter = self.electric_meters[id]
-        except KeyError as e:
-            raise e
+        electric_meter = self.electric_meters[id]
 
         if value is not None:
-            electric_meter.value = value
+            electric_meter.set_value(value)
         if pin is not None:
-            electric_meter.pin = pin
+            electric_meter.set_pin(pin)
         if active_low is not None:
-            electric_meter.active_low = active_low
+            electric_meter.set_active_low(active_low)
         if name is not None:
-            electric_meter.name = name
+            electric_meter.set_name(name)
 
         return electric_meter
 
