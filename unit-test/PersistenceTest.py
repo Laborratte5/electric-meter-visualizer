@@ -7,6 +7,10 @@ import Persistence
 from ElectricMeterMockup import ElectricMeterMockup
 from Persistence import State
 
+def cleanup() -> None:
+    if os.path.exists(Persistence.STATE_FILE):
+        os.remove(Persistence.STATE_FILE)
+
 
 def create_state_file(next_id, meter_id, value, pin, active_low, name, count):
     json_data = \
@@ -32,6 +36,8 @@ class MyTestCase(unittest.TestCase):
     def setUp(self) -> None:
         if os.path.isfile(Persistence.STATE_FILE):
             os.remove(Persistence.STATE_FILE)
+
+        self.addCleanup(cleanup)
 
     def test_get_state(self):
         state = State.get_state()
