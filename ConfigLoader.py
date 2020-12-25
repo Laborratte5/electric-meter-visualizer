@@ -6,7 +6,6 @@ CONFIG_FILE = 'config.ini'
 
 
 class Config:
-
     config = None
     config_parser = None
 
@@ -28,7 +27,6 @@ class Config:
                     config.keep_year = int(config_parser['DATABASE']['keep-year'])
                     config.keep_years = int(config_parser['DATABASE']['keep-years'])
                 except (KeyError, ValueError) as e:
-                    # TODO print error
                     logging.warning('Invalid config file. Using default config.')
                     logging.exception(e)
                     # Create default config
