@@ -7,6 +7,7 @@ import Persistence
 from ElectricMeterMockup import ElectricMeterMockup
 from Persistence import State
 
+
 def cleanup() -> None:
     if os.path.exists(Persistence.STATE_FILE):
         os.remove(Persistence.STATE_FILE)
