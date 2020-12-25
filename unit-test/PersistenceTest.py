@@ -93,10 +93,10 @@ class MyTestCase(unittest.TestCase):
         # Assertion
         with open(Persistence.STATE_FILE) as state_file:
             obj = json.load(state_file)
-            self.assertEqual(str(obj['electric-meters'][0]['value']), str(value))
-            self.assertEqual(str(obj['electric-meters'][0]['pin']), str(pin))
-            self.assertEqual(str(obj['electric-meters'][0]['active-low']), str(active_low))
-            self.assertEqual(str(obj['electric-meters'][0]['name']), name)
+            self.assertEqual(str(obj['electric_meters'][0]['value']), str(value))
+            self.assertEqual(str(obj['electric_meters'][0]['pin']), str(pin))
+            self.assertEqual(str(obj['electric_meters'][0]['active_low']), str(active_low))
+            self.assertEqual(str(obj['electric_meters'][0]['name']), name)
             self.assertEqual(str(obj['electric_meters'][0]['count']), str(count))
 
     def test_load_electric_meter(self):
