@@ -132,6 +132,14 @@ class LogicTest(unittest.TestCase):
 
         self.assertEqual(new_meter, self.logic.get_electric_meter(id))
 
+    def test_add_invalid_meter(self):
+        value = -3
+        pin = -2
+        active_low = False
+        name = ''
+
+        self.assertRaises(ValueError, self.logic.add_electric_meter, value, pin, active_low, name)
+
     def test_remove_electric_meter(self):
         # Add electric meter
         electric_meter_id = 0
@@ -150,6 +158,11 @@ class LogicTest(unittest.TestCase):
         # Check if correct electric meter has been removed
         self.assertEqual(removed_meter, electric_meter)
 
+    def test_remove_not_existing_meter(self):
+        invalid_meter_id = -100
+
+        self.assertRaises(KeyError, self.logic.remove_electric_meter, invalid_meter_id)
+
     def test_change_electric_meter(self):
         # Setup
         electric_meter = ElectricMeterMockup(10, 0, False, 'em1')
@@ -166,6 +179,23 @@ class LogicTest(unittest.TestCase):
         self.assertEqual(em.pin, 500)
         self.assertEqual(em.active_low, True)
         self.assertEqual(em.name, 'changed_em1')
+
+    def test_change_not_existing_meter(self):
+        invalid_meter_id = -100
+
+        # Assert
+        self.assertRaises(KeyError, self.logic.change_electric_meter, invalid_meter_id)
+
+    def test_invalid_change_on_meter(self):
+        # Setup
+        self.logic.electric_meters[0] = ElectricMeterMockup(1, 0, False, 'meter1')
+        value = -3
+        pin = -2
+        active_low = False
+        name = ''
+
+        # Assert
+        self.assertRaises(ValueError, self.logic.change_electric_meter, 0, value, pin, active_low, name)
 
     def test_read_electric_meters(self):
         # Setup Electric Meter
