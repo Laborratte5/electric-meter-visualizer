@@ -165,7 +165,7 @@ class LogicTest(unittest.TestCase):
 
     def test_change_electric_meter(self):
         # Setup
-        electric_meter = ElectricMeterMockup(10, 0, False, 'em1')
+        electric_meter = ElectricMeterMockup(10, 1, False, 'em1')
         electric_meter_id = 10
         self.logic.electric_meters[electric_meter_id] = electric_meter
         self.logic._next_id = electric_meter_id
