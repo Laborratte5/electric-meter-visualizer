@@ -62,7 +62,7 @@ class MyTestCase(unittest.TestCase):
         next_id = 10
         meter_id = 0
         value = 0
-        pin = 0
+        pin = 1
         active_low = False
         name = 'meter_1'
         count = 0
@@ -78,7 +78,7 @@ class MyTestCase(unittest.TestCase):
     def test_save_electric_meter(self):
         # Setup
         value = 321
-        pin = 123
+        pin = 1
         active_low = False
         name = 'test'
         count = 456
@@ -103,7 +103,7 @@ class MyTestCase(unittest.TestCase):
         # Setup
         meter_id = 1
         value = 321
-        pin = 123
+        pin = 1
         active_low = False
         name = 'test'
         count = 456
