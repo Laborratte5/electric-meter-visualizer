@@ -167,16 +167,18 @@ class LogicTest(unittest.TestCase):
         # Setup
         electric_meter = ElectricMeterMockup(10, 1, False, 'em1')
         electric_meter_id = 10
+        new_value = 5
+        new_pin = 6
         self.logic.electric_meters[electric_meter_id] = electric_meter
         self.logic._next_id = electric_meter_id
 
         # Change Electric Meter
-        self.logic.change_electric_meter(electric_meter_id, 100, 500, True, 'changed_em1')
+        self.logic.change_electric_meter(electric_meter_id, new_value, new_pin, True, 'changed_em1')
 
         # Check if Electric Meter data was changed
         em = self.logic.get_electric_meter(electric_meter_id)
-        self.assertEqual(em.value, 100)
-        self.assertEqual(em.pin, 500)
+        self.assertEqual(em.value, new_value)
+        self.assertEqual(em.pin, new_pin)
         self.assertEqual(em.active_low, True)
         self.assertEqual(em.name, 'changed_em1')
 
@@ -188,7 +190,7 @@ class LogicTest(unittest.TestCase):
 
     def test_invalid_change_on_meter(self):
         # Setup
-        self.logic.electric_meters[0] = ElectricMeterMockup(1, 0, False, 'meter1')
+        self.logic.electric_meters[0] = ElectricMeterMockup(1, 1, False, 'meter1')
         value = -3
         pin = -2
         active_low = False
