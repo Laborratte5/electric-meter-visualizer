@@ -1,3 +1,4 @@
+import os
 import string
 import unittest
 import random
@@ -102,6 +103,10 @@ class ElectricMeterTestMock:
         pass
 
 
+def cleanup() -> None:
+    if os.path.isfile('database.json'):
+        os.remove('database.json')
+
 # Test every method in Logic except get_dataXY() methods
 class LogicTest(unittest.TestCase):
 
@@ -109,6 +114,7 @@ class LogicTest(unittest.TestCase):
         self.logic = Logic(ConfigMock(), True)
         self.db_mock = DatabaseLogicTestMock()
         self.logic.database = self.db_mock
+        self.addCleanup(cleanup)
 
     def test_add_electric_meter(self):
         pre_add_len = len(self.logic.electric_meters)
@@ -233,6 +239,7 @@ class LogicGetTest(unittest.TestCase):
         self.logic.add_electric_meter(1, 1, False, self.electric_meter_name)
         self.db_mock = DatabaseLogicGetTestMock()
         self.logic.database = self.db_mock
+        self.addCleanup(cleanup)
 
     def test_get_raw(self):
         raw = self.logic.get_raw()
