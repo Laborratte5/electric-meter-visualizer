@@ -1,6 +1,7 @@
 class ElectricMeter:
 
     def __init__(self, value, pin, active_low, name):
+        self.count = 0
         self.value = None
         self.pin = None
         self.active_low = None
