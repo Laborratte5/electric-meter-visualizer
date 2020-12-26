@@ -37,14 +37,18 @@ class StateJsonEncoder(json.JSONEncoder):
     def encode_state(self, state):
         return {
             'next_id': state.get_next_id(),
-            'electric_meters': [{
-                    'id': meter_id,
-                    'name': meter.name,
-                    'value': meter.value,
-                    'pin': meter.pin,
-                    'active_low': meter.active_low,
-                    'count': meter.count
-                } for meter_id, meter in state.electric_meters.items()]
+            'electric_meters': [self.encode_electric_meter(meter_id, meter)
+                                for meter_id, meter in state.electric_meters.items()]
+        }
+
+    def encode_electric_meter(self, meter_id, electric_meter):
+        meter_dict = {
+            'id': meter_id,
+            'name': electric_meter.name,
+            'value': electric_meter.value,
+            'pin': electric_meter.pin,
+            'active_low': electric_meter.active_low,
+            'count': electric_meter.count
         }
 
     def default(self, o):
