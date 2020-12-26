@@ -289,10 +289,6 @@ class LogicGetTest(unittest.TestCase):
             self.assertEqual(self.db_mock.get_day()[meter_id][idx]['value'], data_point['value'])
             self.assertEqual(self.db_mock.get_day()[meter_id][idx]['timestamp'], data_point['timestamp'])
 
-    def test_get_week(self):
-        # TODO
-        pass
-
     def test_get_month(self):
         month = self.logic.get_month()
         meter_id = 10
