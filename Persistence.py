@@ -50,6 +50,11 @@ class StateJsonEncoder(json.JSONEncoder):
             'active_low': electric_meter.active_low,
             'count': electric_meter.count
         }
+        # Add flag if this meter is a Mockup, so at deserialization the correct type can be instantiated
+        if isinstance(electric_meter, ElectricMeterMockup):
+            meter_dict['_mockup_'] = True
+
+        return meter_dict
 
     def default(self, o):
         if isinstance(o, State):
