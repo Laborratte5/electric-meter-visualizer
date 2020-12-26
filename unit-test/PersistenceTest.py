@@ -12,7 +12,6 @@ def cleanup() -> None:
     if os.path.exists(Persistence.STATE_FILE):
         os.remove(Persistence.STATE_FILE)
 
-
 def create_state_file(next_id, meter_id, value, pin, active_low, name, count):
     json_data = \
         '''{{"next_id": {next_id}, 
@@ -61,7 +60,7 @@ class MyTestCase(unittest.TestCase):
         # Setup
         next_id = 10
         meter_id = 0
-        value = 0
+        value = 1
         pin = 1
         active_low = False
         name = 'meter_1'
@@ -82,7 +81,8 @@ class MyTestCase(unittest.TestCase):
         active_low = False
         name = 'test'
         count = 456
-        electric_meter = ElectricMeterMockup(value, pin, active_low, name)
+        electric_meter = ElectricMeterMockup(value, pin, active_low, name) #TODO
+        #electric_meter = ElectricMeter(value, pin, active_low, name)
         electric_meter.count = count
         electric_meters = {0: electric_meter}
         state = State.get_state()
