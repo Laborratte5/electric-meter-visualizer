@@ -103,9 +103,33 @@ class ElectricMeterTestMock:
         pass
 
 
+class StateMock:
+    @classmethod
+    def get_state(cls):
+        return StateMock()
+
+    def __init__(self):
+        # Initialize with default values
+        self.next_id = 10
+        self.electric_meters = {}
+
+    def get_next_id(self):
+        return self.next_id
+
+    def set_next_id(self, next_id):
+        self.next_id = next_id
+
+    def get_electric_meters(self):
+        return self.electric_meters
+
+    def set_electric_meters(self, electric_meters):
+        self.electric_meters = electric_meters
+
+
 def cleanup() -> None:
     if os.path.isfile('database.json'):
         os.remove('database.json')
+
 
 # Test every method in Logic except get_dataXY() methods
 class LogicTest(unittest.TestCase):
@@ -114,10 +138,12 @@ class LogicTest(unittest.TestCase):
         self.logic = Logic(ConfigMock(), True)
         self.db_mock = DatabaseLogicTestMock()
         self.logic.database = self.db_mock
+        self.state_mock = StateMock()
+        self.logic.state = self.state_mock
         self.addCleanup(cleanup)
 
     def test_add_electric_meter(self):
-        pre_add_len = len(self.logic.electric_meters)
+        pre_add_len = len(self.state_mock.electric_meters)
 
         # Create random values
         value = random.random() * random.randint(1, 100)
@@ -129,7 +155,7 @@ class LogicTest(unittest.TestCase):
         new_meter, id = self.logic.add_electric_meter(value, pin, active_low, name)
 
         # Assertion
-        self.assertGreater(len(self.logic.electric_meters), pre_add_len)
+        self.assertGreater(len(self.state_mock.electric_meters), pre_add_len)
 
         self.assertEqual(value, new_meter.value)
         self.assertEqual(pin, new_meter.pin)
@@ -150,17 +176,17 @@ class LogicTest(unittest.TestCase):
         # Add electric meter
         electric_meter_id = 0
         electric_meter = ElectricMeterMockup(1, 1, False, 'electric meter to be removed')
-        self.logic.electric_meters[electric_meter_id] = electric_meter
+        self.state_mock.electric_meters[electric_meter_id] = electric_meter
         self.logic._next_id = electric_meter_id
         self.db_mock.add_data_src(electric_meter_id)
 
-        pre_remove_len = len(self.logic.electric_meters)
+        pre_remove_len = len(self.state_mock.electric_meters)
         # Remove electric meter
         removed_meter = self.logic.remove_electric_meter(electric_meter_id)
 
         # Check if electric meter has been removed
-        self.assertGreater(pre_remove_len, len(self.logic.electric_meters))
-        self.assertNotIn(electric_meter, self.logic.electric_meters.values())
+        self.assertGreater(pre_remove_len, len(self.state_mock.electric_meters))
+        self.assertNotIn(electric_meter, self.state_mock.electric_meters.values())
         # Check if correct electric meter has been removed
         self.assertEqual(removed_meter, electric_meter)
 
@@ -175,7 +201,7 @@ class LogicTest(unittest.TestCase):
         electric_meter_id = 10
         new_value = 5
         new_pin = 6
-        self.logic.electric_meters[electric_meter_id] = electric_meter
+        self.state_mock.electric_meters[electric_meter_id] = electric_meter
         self.logic._next_id = electric_meter_id
 
         # Change Electric Meter
@@ -196,7 +222,7 @@ class LogicTest(unittest.TestCase):
 
     def test_invalid_change_on_meter(self):
         # Setup
-        self.logic.electric_meters[0] = ElectricMeterMockup(1, 1, False, 'meter1')
+        self.state_mock.electric_meters[0] = ElectricMeterMockup(1, 1, False, 'meter1')
         value = -3
         pin = -2
         active_low = False
@@ -211,9 +237,9 @@ class LogicTest(unittest.TestCase):
         em2_id = 1
         em1 = ElectricMeterTestMock(amount=1)
         em2 = ElectricMeterTestMock(amount=10)
-        self.logic.electric_meters[em1_id] = em1
-        self.logic.electric_meters[em2_id] = em2
-        self.logic._next_id = 1
+        self.state_mock.electric_meters[em1_id] = em1
+        self.state_mock.electric_meters[em2_id] = em2
+        self.state_mock.next_id = 1
         # Setup Database
         self.db_mock.add_data_src(em1_id)
         self.db_mock.add_data_src(em2_id)
