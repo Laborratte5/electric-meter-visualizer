@@ -59,7 +59,7 @@ class DatabaseLogicTestMock:
 class DatabaseLogicGetTestMock:
 
     def get_raw(self, delta=0):
-        return {1: [{'value': 1, 'timestamp': datetime(2020, 10, 30, 12, 00)},
+        return {10: [{'value': 1, 'timestamp': datetime(2020, 10, 30, 12, 00)},
                         {'value': 1, 'timestamp': datetime(2020, 10, 30, 12, 15)},
                         {'value': 1, 'timestamp': datetime(2020, 10, 30, 12, 30)},
                         {'value': 1, 'timestamp': datetime(2020, 10, 30, 12, 45)},
@@ -71,20 +71,20 @@ class DatabaseLogicGetTestMock:
                         ]}
 
     def get_day(self, delta=0):
-        return {1: [{'value': hour * 10, 'timestamp': datetime(2020, 10, hour//24 + 1, hour % 24, 00)}
+        return {10: [{'value': hour * 10, 'timestamp': datetime(2020, 10, hour//24 + 1, hour % 24, 00)}
                     for hour in range(48)]}
 
     def get_month(self, delta=0):
         # Start with March to skip February because of 28 day instead of 30 or 31
-        return {1: [{'value': day * 10, 'timestamp': datetime(2020, day//30 + 3, day % 30 + 1, 00, 00)}
+        return {10: [{'value': day * 10, 'timestamp': datetime(2020, day//30 + 3, day % 30 + 1, 00, 00)}
                     for day in range(60)]}
 
     def get_year(self, delta=0):
-        return {1: [{'value': month * 10, 'timestamp': datetime(2020, month + 1, 1, 00, 00)}
+        return {10: [{'value': month * 10, 'timestamp': datetime(2020, month + 1, 1, 00, 00)}
                         for month in range(12)]}
 
     def get_years(self, delta=0):
-        return {1: [{'value': year * 10, 'timestamp': datetime(year + 1, 1, 1, 00, 00)}
+        return {10: [{'value': year * 10, 'timestamp': datetime(year + 1, 1, 1, 00, 00)}
                     for year in range(3)]}
 
 
@@ -269,23 +269,25 @@ class LogicGetTest(unittest.TestCase):
 
     def test_get_raw(self):
         raw = self.logic.get_raw()
+        meter_id = 10
 
         # Assertion
         self.assertIn(self.electric_meter_name, raw.keys())
-        self.assertEqual(len(raw[self.electric_meter_name]), len(self.db_mock.get_raw()[1]))
+        self.assertEqual(len(raw[self.electric_meter_name]), len(self.db_mock.get_raw()[meter_id]))
         for idx, data_point in enumerate(raw[self.electric_meter_name]):
-            self.assertEqual(self.db_mock.get_raw()[1][idx]['value'], data_point['value'])
-            self.assertEqual(self.db_mock.get_raw()[1][idx]['timestamp'], data_point['timestamp'])
+            self.assertEqual(self.db_mock.get_raw()[meter_id][idx]['value'], data_point['value'])
+            self.assertEqual(self.db_mock.get_raw()[meter_id][idx]['timestamp'], data_point['timestamp'])
 
     def test_get_day(self):
         day = self.logic.get_day()
+        meter_id = 10
 
         # Assertion
         self.assertIn(self.electric_meter_name, day.keys())
-        self.assertEqual(len(day[self.electric_meter_name]), len(self.db_mock.get_day()[1]))
+        self.assertEqual(len(day[self.electric_meter_name]), len(self.db_mock.get_day()[meter_id]))
         for idx, data_point in enumerate(day[self.electric_meter_name]):
-            self.assertEqual(self.db_mock.get_day()[1][idx]['value'], data_point['value'])
-            self.assertEqual(self.db_mock.get_day()[1][idx]['timestamp'], data_point['timestamp'])
+            self.assertEqual(self.db_mock.get_day()[meter_id][idx]['value'], data_point['value'])
+            self.assertEqual(self.db_mock.get_day()[meter_id][idx]['timestamp'], data_point['timestamp'])
 
     def test_get_week(self):
         # TODO
@@ -293,33 +295,36 @@ class LogicGetTest(unittest.TestCase):
 
     def test_get_month(self):
         month = self.logic.get_month()
+        meter_id = 10
 
         # Assertion
         self.assertIn(self.electric_meter_name, month.keys())
-        self.assertEqual(len(month[self.electric_meter_name]), len(self.db_mock.get_month()[1]))
+        self.assertEqual(len(month[self.electric_meter_name]), len(self.db_mock.get_month()[meter_id]))
         for idx, data_point in enumerate(month[self.electric_meter_name]):
-            self.assertEqual(self.db_mock.get_month()[1][idx]['value'], data_point['value'])
-            self.assertEqual(self.db_mock.get_month()[1][idx]['timestamp'], data_point['timestamp'])
+            self.assertEqual(self.db_mock.get_month()[meter_id][idx]['value'], data_point['value'])
+            self.assertEqual(self.db_mock.get_month()[meter_id][idx]['timestamp'], data_point['timestamp'])
 
     def test_get_year(self):
         year = self.logic.get_year()
+        meter_id = 10
 
         # Assertion
         self.assertIn(self.electric_meter_name, year.keys())
-        self.assertEqual(len(year[self.electric_meter_name]), len(self.db_mock.get_year()[1]))
+        self.assertEqual(len(year[self.electric_meter_name]), len(self.db_mock.get_year()[meter_id]))
         for idx, data_point in enumerate(year[self.electric_meter_name]):
-            self.assertEqual(self.db_mock.get_year()[1][idx]['value'], data_point['value'])
-            self.assertEqual(self.db_mock.get_year()[1][idx]['timestamp'], data_point['timestamp'])
+            self.assertEqual(self.db_mock.get_year()[meter_id][idx]['value'], data_point['value'])
+            self.assertEqual(self.db_mock.get_year()[meter_id][idx]['timestamp'], data_point['timestamp'])
 
     def test_get_years(self):
         years = self.logic.get_years()
+        meter_id = 10
 
         # Assertion
         self.assertIn(self.electric_meter_name, years.keys())
-        self.assertEqual(len(years[self.electric_meter_name]), len(self.db_mock.get_years()[1]))
+        self.assertEqual(len(years[self.electric_meter_name]), len(self.db_mock.get_years()[meter_id]))
         for idx, data_point in enumerate(years[self.electric_meter_name]):
-            self.assertEqual(self.db_mock.get_years()[1][idx]['value'], data_point['value'])
-            self.assertEqual(self.db_mock.get_years()[1][idx]['timestamp'], data_point['timestamp'])
+            self.assertEqual(self.db_mock.get_years()[meter_id][idx]['value'], data_point['value'])
+            self.assertEqual(self.db_mock.get_years()[meter_id][idx]['timestamp'], data_point['timestamp'])
 
 
 if __name__ == '__main__':
