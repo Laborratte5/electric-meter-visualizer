@@ -101,22 +101,29 @@ class Logic:
     # Data API
     # TODO t_minus
     def get_raw(self):
-        return {self.state.get_electric_meters()[datasource].name: data for datasource, data in self.database.get_raw().items()}
+        return {self.state.get_electric_meters()[datasource].name: data
+                for datasource, data in self.database.get_raw().items()}
 
     def get_day(self, t_minus=0):
-        return {self.state.get_electric_meters()[datasource].name: data for datasource, data in self.database.get_day().items()}
+        return {self.state.get_electric_meters()[datasource].name: data
+                for datasource, data in self.database.get_day().items()}
 
     def get_week(self, t_minus=0):
         # TODO
         data = self.database.get_month().items()
 
-        return data
+        return {self.state.get_electric_meters()[datasource].name: [data_point for data_point in data
+                                                                    if start <= data_point['timestamp'] <= end]
+                for datasource, data in self.database.get_month().items()}
 
     def get_month(self, t_minus=0):
-        return {self.state.get_electric_meters()[datasource].name: data for datasource, data in self.database.get_month().items()}
+        return {self.state.get_electric_meters()[datasource].name: data
+                for datasource, data in self.database.get_month().items()}
 
     def get_year(self, t_minus=0):
-        return {self.state.get_electric_meters()[datasource].name: data for datasource, data in self.database.get_year().items()}
+        return {self.state.get_electric_meters()[datasource].name: data
+                for datasource, data in self.database.get_year().items()}
 
     def get_years(self):
-        return {self.state.get_electric_meters()[datasource].name: data for datasource, data in self.database.get_years().items()}
+        return {self.state.get_electric_meters()[datasource].name: data
+                for datasource, data in self.database.get_years().items()}
