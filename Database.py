@@ -50,28 +50,27 @@ class Database:
                 json.dump(self, f, cls=DatabaseJsonEncoder)
 
     # Getter
-    # TODO delta
-    def get_raw(self, delta=0):
+    def get_raw(self):
         # get data for each datasource and put it in a dict
         return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_raw()]
                 for data_src, data in self.datasources.items()}
 
-    def get_day(self, delta=0):
+    def get_day(self):
         # get data for each datasource and put it in a dict
         return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_day()]
                 for data_src, data in self.datasources.items()}
 
-    def get_month(self, delta=0):
+    def get_month(self):
         # get data for each datasource and put it in a dict
         return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_month()]
                 for data_src, data in self.datasources.items()}
 
-    def get_year(self, delta=0):
+    def get_year(self):
         # get data for each datasource and put it in a dict
         return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_year()]
                 for data_src, data in self.datasources.items()}
 
-    def get_years(self, delta=0):
+    def get_years(self):
         # get data for each datasource and put it in a dict
         return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_years()]
                 for data_src, data in self.datasources.items()}
