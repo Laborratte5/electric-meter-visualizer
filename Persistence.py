@@ -1,4 +1,9 @@
 import json
+import os
+from json.decoder import JSONDecodeError
+
+from ElectricMeter import ElectricMeter
+from ElectricMeterMockup import ElectricMeterMockup
 
 STATE_FILE = 'state.json'
 
@@ -65,8 +70,44 @@ class StateJsonEncoder(json.JSONEncoder):
 
 
 class StateJsonDecoder:
-    # TODO
-    pass
+
+    def is_state(self, o):
+        return all(key in ('next_id', 'electric_meters') for key in o.keys())
+
+    def is_electric_meter(self, o):
+        return all(key in ('id', 'name', 'value', 'pin', 'active_low', 'count') for key in o.keys())
+
+    def decode_state(self, o):
+        state = State()
+        state.next_id = o['next_id']
+        state.electric_meters = {meter_id: meter for meter_id, meter in o['electric_meters']}
+        return state
+
+    def decode_electric_meter(self, o):
+        meter_id = o['id']
+        value = o['value']
+        count = o['count']
+        name = o['name']
+        pin = o['pin']
+        active_low = o['active_low']
+
+        if '_mockup_' in o.keys():
+            electric_meter = ElectricMeterMockup(value, pin, active_low, name)
+        else:
+            electric_meter = ElectricMeter(value, pin, active_low, name)
+        electric_meter.count = count
+
+        return meter_id, electric_meter
+
+    def decode(self, o):
+        if self.is_state(o):
+            # deserialize state
+            return self.decode_state(o)
+        elif self.is_electric_meter(o):
+            # deserialize electric meter
+            return self.decode_electric_meter(o)
+        else:
+            raise ValueError('Error decoding state file')
 
 
 class InvalidStateFileException(Exception):
