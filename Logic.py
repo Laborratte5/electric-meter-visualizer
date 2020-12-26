@@ -1,6 +1,5 @@
 import threading
 import time
-from datetime import datetime, timedelta
 
 from ElectricMeter import ElectricMeter
 from ElectricMeterMockup import ElectricMeterMockup
@@ -107,14 +106,6 @@ class Logic:
     def get_day(self, t_minus=0):
         return {self.state.get_electric_meters()[datasource].name: data
                 for datasource, data in self.database.get_day().items()}
-
-    def get_week(self, t_minus=0):
-        # TODO
-        data = self.database.get_month().items()
-
-        return {self.state.get_electric_meters()[datasource].name: [data_point for data_point in data
-                                                                    if start <= data_point['timestamp'] <= end]
-                for datasource, data in self.database.get_month().items()}
 
     def get_month(self, t_minus=0):
         return {self.state.get_electric_meters()[datasource].name: data
