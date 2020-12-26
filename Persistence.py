@@ -12,7 +12,15 @@ class State:
 
     @classmethod
     def get_state(cls):
-        pass
+        if os.path.isfile(STATE_FILE):
+            with open(STATE_FILE, 'r') as f:
+                decoder = StateJsonDecoder()
+                try:
+                    state = json.load(f, object_hook=decoder.decode)
+                except JSONDecodeError as jsonError:
+                    raise InvalidStateFileException from jsonError
+                return state
+        return State()
 
     def save_state(self):
         with open(STATE_FILE, 'w') as f:
