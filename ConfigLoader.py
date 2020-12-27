@@ -61,6 +61,7 @@ class Config:
     def __init__(self, config_parser):
         self.config_parser = config_parser
 
+        # Default config
         self.database_file = 'database.json'
         self.data_per_hour = 4
         self.keep_raw = 10
