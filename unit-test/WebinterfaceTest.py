@@ -211,7 +211,7 @@ class PostElectricMeterApiTest(unittest.TestCase):
         # Assert
         self.assertEqual(400, response.status_code)
 
-        content = response.data
+        content = json.loads(response.data)
         self.assertEqual('INVALID_ELECTRIC_METER_PARAMETER', content['code'])
         self.assertEqual('electric meter name must not be empty', content['message'])
         self.assertEqual({
