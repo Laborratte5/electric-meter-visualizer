@@ -194,6 +194,29 @@ class GetElectricMeterApiTest(unittest.TestCase):
             }
         ], content['electric_meters'])
 
+    def testGetElectricMeter_oneOfTwo(self):
+        meter1, meter1_id = self.addElectricMeterToLogicMock(4, 1, False, 'first meter', 5)
+        self.addElectricMeterToLogicMock(12, 2, True, 'second meter', 3)
+
+        # Test
+        response = self.app.get(GetElectricMeterApiTest.url + '?id=' + str(meter1_id))
+
+        # Assert
+        self.assertEqual(200, response.status_code)
+
+        content = json.loads(response.data)
+        self.assertEqual(1, content['total_number'])
+        self.assertEqual([
+            {
+                'id': meter1_id,
+                'name': meter1.name,
+                'pin': meter1.pin,
+                'value': meter1.value,
+                'active_low': meter1.active_low,
+                'current_value': meter1.count * meter1.value
+            }
+        ], content['electric_meters'])
+
     def addElectricMeterToLogicMock(self, value, pin, active_low, name, meter_count):
         meter, meter_id = self.logic_mock.add_electric_meter(value, pin, active_low, name)
         meter.count = meter_count
