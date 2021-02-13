@@ -261,11 +261,28 @@ class LogicGetTest(unittest.TestCase):
 
     def setUp(self):
         self.logic = Logic(ConfigMock(), True)
+        self.logic.state = StateMock()
         self.electric_meter_name = 'em1'
         self.logic.add_electric_meter(1, 1, False, self.electric_meter_name)
         self.db_mock = DatabaseLogicGetTestMock()
         self.logic.database = self.db_mock
         self.addCleanup(cleanup)
+
+    def test_get_electric_meters(self):
+        # Setup
+        test_meter1 = ElectricMeterMockup(5, 1, False, 'test_meter')
+        test_meter2 = ElectricMeterMockup(3, 2, False, 'second_test_meter')
+        self.logic.state.set_electric_meters({
+            10: test_meter1,
+            11: test_meter2
+        })
+
+        # Test
+        meters = self.logic.get_electric_meters()
+
+        # Assertion
+        self.assertIn((10, test_meter1), meters)
+        self.assertIn((11, test_meter2), meters)
 
     def test_get_raw(self):
         raw = self.logic.get_raw()
