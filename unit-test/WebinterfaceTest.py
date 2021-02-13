@@ -108,17 +108,29 @@ class GetElectricMeterApiTest(unittest.TestCase):
         self.assertEqual('electric meter id must be a integer', content['message'])
         self.assertEqual({}, content['info'])
 
-    def testGetElectricMeter_badRequest(self):
+    def testGetElectricMeter_validId(self):
+        meter, meter_id = self.addElectricMeterToLogicMock(4, 1, False, 'First Electric Meter', 3)
+
         # Test
-        response = self.app.get(GetElectricMeterApiTest.url)
+        response = self.app.get(GetElectricMeterApiTest.url + '?id=' + str(meter_id))
 
         # Assert
-        self.assertEqual(400, response.status_code)
+        self.assertEqual(200, response.status_code)
 
         content = json.loads(response.data)
-        self.assertEqual('NO_ID_PROVIDED', content['code'])
-        self.assertEqual('no id provided by request', content['message'])
-        self.assertEqual({'parameter_name': 'id'}, content['info'])
+        self.assertEqual({
+            'total_number': 1,
+            'electric_meters': [
+                {
+                    'id': meter_id,
+                    'name': meter.name,
+                    'pin': meter.pin,
+                    'active_low': meter.active_low,
+                    'value': meter.value,
+                    'current_value': meter.value * meter.count
+                }
+            ]
+        }, content)
 
     def testGetElectricMeter_noMeters(self):
         # Test
