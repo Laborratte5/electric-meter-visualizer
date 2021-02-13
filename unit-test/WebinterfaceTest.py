@@ -180,7 +180,7 @@ class GetElectricMeterApiTest(unittest.TestCase):
                 'id': meter1_id,
                 'name': meter1.name,
                 'pin': meter1.pin,
-                'value': meter2.value,
+                'value': meter1.value,
                 'active_low': meter1.active_low,
                 'current_value': meter1.count * meter1.value
             },
