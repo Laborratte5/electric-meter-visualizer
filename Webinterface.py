@@ -76,30 +76,30 @@ def years_data():
 
 
 # Electric meter API
-# TODO test
-@app.route('/api/json/electric-meter')
-def electric_meter():
+@app.route('/electric-meter', methods=['GET'])
+def get_electric_meter():
+    # Utility method to create a json response
+    def create_json_response(electric_meters):
+        return {
+            "total_number": len(electric_meters),
+            "electric_meters": [electric_meter_to_dic(meter_id, electric_meter)
+                                for meter_id, electric_meter in electric_meters]
+        }
     # Supplied id means return only electric meter with this id
     if 'id' in request.args.keys():
-        params = parse_parameter_json(('id', int))
-        id = params['id']
         # Search for electric meter witch specific id
         try:
-            electric_meter = logic.get_electric_meter(id)
-            electric_meters_json = electric_meter_to_dic(electric_meter)
-            return {
-                "electric-meter": electric_meters_json
-            }
+            id = int(request.args['id'])
+            electric_meter = [(id, logic.get_electric_meter(id))]  # Wrap meter in list of (id, meter) tupel
+            return create_json_response(electric_meter)
         except KeyError:
-            abort_no_electric_meter_with_id(id)
+            abort_meter_not_found('no electric meter with requested id exist')
+        except ValueError:
+            abort_meter_not_found('electric meter id must be a integer')
     # No id means return all electric meter
     else:
         electric_meters = logic.get_electric_meters()
-        electric_meters_json = [{"id": id, "electric_meter": electric_meter_to_dic(electric_meter)}
-                                for id, electric_meter in electric_meters]
-        return {
-            "electric-meters": electric_meters_json
-        }
+        return create_json_response(electric_meters)
 
 
 @app.route('/api/json/electric-meter/add')
@@ -250,22 +250,30 @@ def abort_parameter(info, parameter_list):
     abort(response)
 
 
-def abort_no_electric_meter_with_id(id):
-    json_message = jsonify({
-        "code": 400,
-        "info": "no electric meter with this id found",
-        "id": int(id)
-    })
-    response = make_response(json_message, 400)
+def abort_meter_not_found(info):
+    response = make_response(make_error_response('ELECTRIC_METER_NOT_FOUND', info), 404)
     abort(response)
 
 
-def electric_meter_to_dic(electric_meter):
+def make_error_response(error_code, message, info=None):
+    if info is None:
+        info = {}
+
     return {
-        "name": electric_meter.name,
-        "value": electric_meter.value,
-        "pin": electric_meter.pin,
-        "active-low": electric_meter.active_low
+        'code': error_code,
+        'message': message,
+        'info': info
+    }
+
+
+def electric_meter_to_dic(meter_id, electric_meter):
+    return {
+        'id': meter_id,
+        'name': electric_meter.name,
+        'pin': electric_meter.pin,
+        'active_low': electric_meter.active_low,
+        'value': electric_meter.value,
+        'current_value': electric_meter.get_amount()
     }
 
 
