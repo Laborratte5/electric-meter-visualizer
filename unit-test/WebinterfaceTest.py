@@ -234,7 +234,7 @@ class PostElectricMeterApiTest(unittest.TestCase):
         app.config['TESTING'] = True
         self.app = app.test_client()
 
-    def testPostElectricMeter_badRequest(self):
+    def testPostElectricMeter_badRequestInvalidParameter(self):
         # Test
         response = self.app.post('/electric-meter', json={
             'name': '',  # Empty name not allowed
@@ -252,6 +252,26 @@ class PostElectricMeterApiTest(unittest.TestCase):
         self.assertEqual({
             'parameter_name': 'name',
             'parameter_type': 'text'
+        }, content['info'])
+
+    def testPostElectricMeter_badRequestMissingParameter(self):
+        # Test
+        response = self.app.post('/electric-meter', json={
+            'name': 'test',
+            # Missing value parameter
+            'pin': 5,
+            'active-low': True
+        })
+
+        # Assert
+        self.assertEqual(400, response.status_code)
+
+        content = json.loads(response.data)
+        self.assertEqual('MISSING_ELECTRIC_METER_PARAMETER', content['code'])
+        self.assertEqual('value parameter missing', content['message'])
+        self.assertEqual({
+            'parameter_name': 'value',
+            'parameter_type': 'float'
         }, content['info'])
 
     def testPostElectricMeter_success(self):
