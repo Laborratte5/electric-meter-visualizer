@@ -14,7 +14,7 @@ class LogicMock:
         self.electric_meters = {}
 
     def add_electric_meter(self, value, pin, active_low, name):
-        self._next_id += self._next_id + 1
+        self._next_id += 1
         electric_meter = ElectricMeterMockup(value, pin, active_low, name)
         self.electric_meters[self._next_id] = electric_meter
 
