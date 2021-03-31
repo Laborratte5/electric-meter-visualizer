@@ -240,7 +240,7 @@ class PostElectricMeterApiTest(unittest.TestCase):
             'name': '',  # Empty name not allowed
             'value': 10,
             'pin': 5,
-            'active-low': True
+            'active_low': True
         })
 
         # Assert
@@ -260,7 +260,7 @@ class PostElectricMeterApiTest(unittest.TestCase):
             'name': 'test',
             # Missing value parameter
             'pin': 5,
-            'active-low': True
+            'active_low': True
         })
 
         # Assert
@@ -380,10 +380,10 @@ class PatchElectricMeterApiTest(unittest.TestCase):
             'name': 'Name',
             'value': 10,
             'pin': 5,
-            'active-low': True
+            'active_low': True
         }
         meter, meter_id = self.addElectricMeterToLogicMock(patch_json['name'], patch_json['value'],
-                                         patch_json['pin'], patch_json['active-low'], 3)
+                                         patch_json['pin'], patch_json['active_low'], 3)
         # Test
         response = self.app.patch('/electric-meter?id=' + str(meter_id), json=patch_json)
 
