@@ -238,21 +238,22 @@ class PostElectricMeterApiTest(unittest.TestCase):
         # Test
         response = self.app.post('/electric-meter', json={
             'name': '',  # Empty name not allowed
-            'value': 10,
-            'pin': 5,
-            'active_low': True
+            'value': 0,
+            'pin': 50,
+            'active_low': 'Truefdsa'
         })
 
         # Assert
         self.assertEqual(400, response.status_code)
 
         content = json.loads(response.data)
-        self.assertEqual('INVALID_ELECTRIC_METER_PARAMETER', content['code'])
-        self.assertEqual('electric meter name must not be empty', content['message'])
-        self.assertEqual({
-            'parameter_name': 'name',
-            'parameter_type': 'text'
-        }, content['info'])
+
+        self.assertEqual('INVALID_PARAMETER', content['code'])
+        self.assertListEqual(sorted(['name','value','pin','active_low']), sorted(content['parameter']))
+        self.assertListEqual(sorted(content['parameter']), sorted(list(content['info'].keys())))
+        for info in content['info'].values():
+            self.assertIsNotNone(info)
+            self.assertNotEqual(len(info), 0)
 
     def testPostElectricMeter_badRequestMissingParameter(self):
         # Test
@@ -267,12 +268,12 @@ class PostElectricMeterApiTest(unittest.TestCase):
         self.assertEqual(400, response.status_code)
 
         content = json.loads(response.data)
-        self.assertEqual('MISSING_ELECTRIC_METER_PARAMETER', content['code'])
-        self.assertEqual('value parameter missing', content['message'])
-        self.assertEqual({
-            'parameter_name': 'value',
-            'parameter_type': 'float'
-        }, content['info'])
+        self.assertEqual('INVALID_PARAMETER', content['code'])
+        self.assertListEqual(['value'], content['parameter'])
+        self.assertListEqual(sorted(content['parameter']), sorted(list(content['info'].keys())))
+        for info in content['info']:
+            self.assertIsNotNone(info)
+            self.assertNotEqual(len(info), 0)
 
     def testPostElectricMeter_success(self):
         post_json = {
@@ -291,11 +292,11 @@ class PostElectricMeterApiTest(unittest.TestCase):
         self.assertEqual({
             'id': 11,
             'name': 'Name',
-            'value': 10,
+            'value': 10.0,
             'pin': 5,
             'active_low': True,
 
-            'current_value': 0
+            'current_value': 0.0
         }, content['new_meter'])
 
 
