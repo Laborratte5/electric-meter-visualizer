@@ -264,8 +264,10 @@ def electric_meter_to_dic(meter_id, electric_meter):
 #    app.run()
 
 class AddElectricMeterSchema(Schema):
-    value = fields.Float(required=True, validate=validate.Range(min=0, min_inclusive=False))
-    pin = fields.Integer(required=True, validate=validate.Range(min=0, max=27))
+    value = fields.Float(required=True,
+                         validate=validate.Range(min=0, min_inclusive=False))
+    pin = fields.Integer(required=True,
+                         validate=validate.Range(min=0, max=27))
     active_low = fields.Boolean(required=True)
     name = fields.String(required=True,
                          validate=validate.Regexp(r'[a-zA-Z][A-Za-z0-9]*',
