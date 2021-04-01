@@ -139,7 +139,9 @@ def add_electric_meter():
 
 @app.route('/electric-meter', methods=['DELETE'])
 def delete_electric_meter():
+    abort(501)
     # TODO
+"""
     # Parse parameter
     params = parse_parameter_json(('id', int))
     id = params['id']
@@ -149,11 +151,14 @@ def delete_electric_meter():
         return electric_meter_to_dic(removed_meter)
     #
     except KeyError as e:
-        abort_no_electric_meter_with_id(id)
-
+        abort_meter_not_found('no electric meter with requested id exist')
+"""
 
 @app.route('/electric-meter', methods=['PATCH'])
 def change_electric_meter():
+    abort(501)
+"""
+    # TODO
     params = parse_parameter_json(('id', int))
 
     id = params['id']
@@ -180,14 +185,17 @@ def change_electric_meter():
         changed_meter = logic.change_electric_meter(id, value, pin, active_low, name)
         return electric_meter_to_dic(changed_meter)
     except KeyError as e:
-        abort_no_electric_meter_with_id(id)
+        pass
+        #abort_no_electric_meter_with_id(id)
+"""
+
 
 
 # Helper functions
-# TODO test
-def parse_parameter_json(*expected_parameter, arguments=None):
-    if arguments is None:
-        arguments = request.args
+# TODO remove parse_parameter_json_function
+"""
+def parse_parameter_json(*expected_parameter):
+    arguments = request.args
 
     # Check if parameter is of type 'param_type'
     def is_param_of_type(param_name, param_type):
@@ -227,6 +235,7 @@ def parse_parameter_json(*expected_parameter, arguments=None):
 
     dic = {param_name: parse_param(param_name, param_type) for param_name, param_type in expected_parameter}
     return dic
+"""
 
 
 def abort_parameter(info, parameter_list):
