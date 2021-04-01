@@ -366,7 +366,7 @@ class DeleteElectricMeterApiTest(unittest.TestCase):
         electric_meter, meter_id = self.logic_mock.add_electric_meter(4, 1, False, 'remove me')
 
         # Test
-        response = self.app.delete('/electric-meter?id=', meter_id)
+        response = self.app.delete('/electric-meter?id=' + str(meter_id))
 
         # Assert
         self.assertEqual(200, response.status_code)
