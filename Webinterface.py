@@ -78,6 +78,7 @@ def years_data():
 # Electric meter API
 @app.route('/electric-meter', methods=['GET'])
 def get_electric_meter():
+    # TODO marshmallow
     # Utility method to create a json response
     def create_json_response(electric_meters):
         return {
@@ -102,7 +103,7 @@ def get_electric_meter():
         return create_json_response(electric_meters)
 
 
-@app.route('/api/json/electric-meter/add')
+@app.route('/electric-meter', methods=['POST'])
 def add_electric_meter():
     # TODO write test for parse_parameter_json
     params = parse_parameter_json(('value', float), ('pin', int), ('active-low', bool), ('name', str))
@@ -142,8 +143,10 @@ def add_electric_meter():
     return json_response
 
 
-@app.route('/api/json/electric-meter/remove')
-def remove_electric_meter():
+
+@app.route('/electric-meter', methods=['DELETE'])
+def delete_electric_meter():
+    # TODO
     # Parse parameter
     params = parse_parameter_json(('id', int))
     id = params['id']
@@ -156,7 +159,7 @@ def remove_electric_meter():
         abort_no_electric_meter_with_id(id)
 
 
-@app.route('/api/json/electric-meter/change')
+@app.route('/electric-meter', methods=['PATCH'])
 def change_electric_meter():
     params = parse_parameter_json(('id', int))
 
