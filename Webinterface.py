@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, abort, make_response, jsonify
+from marshmallow import Schema, fields, ValidationError, validate
 
 from ConfigLoader import Config
 from Logic import Logic
@@ -98,43 +99,18 @@ def get_electric_meter():
 
 @app.route('/electric-meter', methods=['POST'])
 def add_electric_meter():
-    # TODO write test for parse_parameter_json
-    params = parse_parameter_json(('value', float), ('pin', int), ('active-low', bool), ('name', str))
-
-    invalid_parameter_value = []
-    # Check parameter value
-    # TODO objekt das in liste 'invalid_parameter_value' eingefügt wird vielleicht über funktion auslagern
-    # TODO vllt auch noch api status code einfügen
-    value = params['value']
-    pin = params['pin']
-    active_low = params['active-low']
-    name = params['name']
-
-    if value <= 0:
-        invalid_parameter_value.append({"parameter": "value",
-                                        "message": "must be greater than 0"
-                                        })
-    if pin <= 0:
-        invalid_parameter_value.append({"parameter": "pin",
-                                        "message": "must be greater than 0"
-                                        })
-    # TODO Namenslänge ohne whitespace character > 0
-    if not bool(name):
-        invalid_parameter_value.append({"parameter": "name",
-                                        "message": "must contain text"
-                                        })
-
-    if len(invalid_parameter_value) > 0:
-        abort_parameter('invalid parameter value', invalid_parameter_value)
+    # Parse request
+    meter_dict = AddElectricMeterSchema().load(request.get_json())
 
     # Add new electric meter
-    new_meter, id = logic.add_electric_meter(value, pin, active_low=active_low, name=name)
+    new_meter, id = logic.add_electric_meter(**meter_dict)
+
     json_response = {
         "id": id,
-        "new_meter": electric_meter_to_dic(new_meter)
+        "new_meter": electric_meter_to_dic(id, new_meter)
     }
-    return json_response
 
+    return json_response, 201
 
 
 @app.route('/electric-meter', methods=['DELETE'])
@@ -190,6 +166,15 @@ def change_electric_meter():
 """
 
 
+@app.errorhandler(ValidationError)
+def handle_validation_error(error):
+    response = {
+        'code': "INVALID_PARAMETER",
+        'parameter': list(error.messages.keys()),
+        'info': error.messages
+    }
+
+    return response, 400
 
 # Helper functions
 # TODO remove parse_parameter_json_function
@@ -277,3 +262,12 @@ def electric_meter_to_dic(meter_id, electric_meter):
 
 #if development_mode:
 #    app.run()
+
+class AddElectricMeterSchema(Schema):
+    value = fields.Float(required=True, validate=validate.Range(min=0, min_inclusive=False))
+    pin = fields.Integer(required=True, validate=validate.Range(min=0, max=27))
+    active_low = fields.Boolean(required=True)
+    name = fields.String(required=True,
+                         validate=validate.Regexp(r'[a-zA-Z][A-Za-z0-9]*',
+                                                  error='Name must match the regex [a-zA-Z][A-Za-z0-9]*'))
+
