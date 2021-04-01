@@ -96,6 +96,21 @@ class GetElectricMeterApiTest(unittest.TestCase):
         self.assertEqual('no electric meter with requested id exist', content['message'])
         self.assertEqual({}, content['info'])
 
+    def testGetElectricMeter_negativId(self):
+        # Test
+        response = self.app.get(GetElectricMeterApiTest.url + '?id=' + '-1')
+
+        # Assert
+        self.assertEqual(400, response.status_code)
+
+        content = json.loads(response.data)
+        self.assertEqual('INVALID_PARAMETER', content['code'])
+        self.assertListEqual(sorted(['id']), sorted(content['parameter']))
+        self.assertListEqual(sorted(content['parameter']), sorted(list(content['info'].keys())))
+        for info in content['info'].values():
+            self.assertIsNotNone(info)
+            self.assertNotEqual(len(info), 0)
+
     def testGetElectricMeter_notFoundIdType(self):
         # Test
         response = self.app.get(GetElectricMeterApiTest.url + '?id=' + 'INVALID')
