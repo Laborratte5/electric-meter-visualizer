@@ -8,13 +8,6 @@ development_mode = app.config['ENV'] == 'development'
 
 logic = Logic(Config.get_config(), development_mode)
 
-# TODO dokumentieren und verwenden
-api_codes = {"missing_parameter": 100,
-             "invalid_type": 200,
-             "invalid_value": 300,
-             "no_electric_meter_id": 400
-             }
-
 
 @app.route('/')
 def index():
@@ -223,13 +216,6 @@ def parse_parameter_json(*expected_parameter, arguments=None):
     # return json error
     if len(missing_parameters) > 0:
         abort_parameter('missing parameters', missing_parameters)
-        """json_message = jsonify({
-            "code": 400,
-            "info": "missing parameters",
-            "parameters": missing_parameters
-        })
-        response = make_response(json_message, 400)
-        abort(response)"""
 
     # Create list of parameters having the wrong type
     invalid_types = [{"parameter": param, "expected_type": str(param_type)}
