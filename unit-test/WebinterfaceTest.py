@@ -333,7 +333,7 @@ class DeleteElectricMeterApiTest(unittest.TestCase):
         response = self.app.delete('/electric-meter?id=' + '300')
 
         # Assert
-        self.assertEquals(404, response.status_code)
+        self.assertEqual(404, response.status_code)
 
         content = json.loads(response.data)
         self.assertEqual('ELECTRIC_METER_NOT_FOUND', content['code'])
@@ -344,7 +344,7 @@ class DeleteElectricMeterApiTest(unittest.TestCase):
         response = self.app.delete('/electric-meter?id=' + 'INVALID')
 
         # Assert
-        self.assertEquals(404, response.status_code)
+        self.assertEqual(404, response.status_code)
 
         content = json.loads(response.data)
         self.assertEqual('ELECTRIC_METER_NOT_FOUND', content['code'])
@@ -447,7 +447,7 @@ class PatchElectricMeterApiTest(unittest.TestCase):
         response = self.app.patch('/electric-meter?id=' + '300', json=patch_json)
 
         # Assert
-        self.assertEquals(404, response.status_code)
+        self.assertEqual(404, response.status_code)
 
         content = json.loads(response.data)
         self.assertEqual('ELECTRIC_METER_NOT_FOUND', content['code'])
