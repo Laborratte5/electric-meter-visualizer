@@ -1,3 +1,6 @@
+import json
+import traceback
+
 from deprecated import deprecated
 
 from flask import Flask, render_template, request, abort, make_response, jsonify
@@ -102,7 +105,7 @@ def get_electric_meter():
 @app.route('/electric-meter', methods=['POST'])
 def add_electric_meter():
     # Parse request
-    meter_dict = AddElectricMeterSchema().load(request.get_json())
+    meter_dict = AddElectricMeterSchema().load(json.loads(request.data))
 
     # Add new electric meter
     new_meter, id = logic.add_electric_meter(**meter_dict)
@@ -135,7 +138,7 @@ def change_electric_meter():
     if request.get_json() is None or len(request.get_json().keys()) == 0:
         return '', 204
 
-    changes = AddElectricMeterSchema().load(request.get_json(), partial=True)
+    changes = AddElectricMeterSchema().load(json.loads(request.data), partial=True)
 
     try:
         value = changes.get('value')
