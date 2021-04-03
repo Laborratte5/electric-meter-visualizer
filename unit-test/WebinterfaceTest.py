@@ -354,7 +354,7 @@ class DeleteElectricMeterApiTest(unittest.TestCase):
             self.assertIsNotNone(info)
             self.assertNotEqual(len(info), 0)
 
-    def testDeleteEelectricMeter_badRequest(self):
+    def testDeleteElectricMeter_badRequest(self):
         response = self.app.delete('/electric-meter')
 
         # Assert
