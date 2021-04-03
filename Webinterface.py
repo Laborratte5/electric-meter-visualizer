@@ -168,6 +168,7 @@ def handle_validation_error(error):
 
     return response, 400
 
+
 # Helper functions
 def abort_meter_not_found(info):
     make_error_response('ELECTRIC_METER_NOT_FOUND', info, error_code=404)
