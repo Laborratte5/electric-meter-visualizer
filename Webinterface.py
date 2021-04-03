@@ -117,20 +117,15 @@ def add_electric_meter():
 
 @app.route('/electric-meter', methods=['DELETE'])
 def delete_electric_meter():
-    abort(501)
-    # TODO
-"""
-    # Parse parameter
-    params = parse_parameter_json(('id', int))
-    id = params['id']
-    # Remove electric meter with id and return it
+    meter_id = RequestElectricMeterSchema().load(request.args).get('id')
+
     try:
-        removed_meter = logic.remove_electric_meter(id)
-        return electric_meter_to_dic(removed_meter)
-    #
-    except KeyError as e:
-        abort_meter_not_found('no electric meter with requested id exist')
-"""
+        removed_meter = logic.remove_electric_meter(meter_id)
+        return {
+            'deleted_meter': electric_meter_to_dic(meter_id, removed_meter)
+        }
+    except KeyError:
+        abort_meter_not_found('no electric meter with requested id exists')
 
 @app.route('/electric-meter', methods=['PATCH'])
 def change_electric_meter():
@@ -275,6 +270,9 @@ class AddElectricMeterSchema(Schema):
                          validate=validate.Range(min=0, max=27))
     active_low = fields.Boolean(required=True)
     name = fields.String(required=True,
-                         validate=validate.Regexp(r'[a-zA-Z][A-Za-z0-9]*',
-                                                  error='Name must match the regex [a-zA-Z][A-Za-z0-9]*'))
+                         validate=validate.Regexp(r'[a-zA-Z][A-Za-z0-9]*'))
+
+
+class RequestElectricMeterSchema(Schema):
+    id = fields.Integer(required=True, validate=validate.Range(min=0))
 
