@@ -80,6 +80,12 @@ class Logic:
     def change_electric_meter(self, id, value=None, pin=None, active_low=None, name=None):
         electric_meter = self.state.get_electric_meters()[id]
 
+        if value == electric_meter.value \
+                and pin == electric_meter.pin \
+                and active_low == electric_meter.active_low \
+                and name == electric_meter.name:
+            return None
+
         if value is not None:
             electric_meter.set_value(value)
         if pin is not None:
