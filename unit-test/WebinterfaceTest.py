@@ -429,12 +429,16 @@ class PatchElectricMeterApiTest(unittest.TestCase):
             'pin': 5
         })
 
+        # Assert
         self.assertEqual(400, response.status_code)
 
         content = json.loads(response.data)
-        self.assertEqual('NO_ID_PROVIDED', content['code'])
-        self.assertEqual('no id provided by request', content['message'])
-        self.assertEqual({'parameter_name': 'id'}, content['info'])
+        self.assertEqual('INVALID_PARAMETER', content['code'])
+        self.assertListEqual(sorted(['id']), sorted(content['parameter']))
+        self.assertListEqual(sorted(content['parameter']), sorted(list(content['info'].keys())))
+        for info in content['info'].values():
+            self.assertIsNotNone(info)
+            self.assertNotEqual(len(info), 0)
 
     def testPatchElectricMeter_badRequestInvalidChange(self):
         electric_meter, meter_id = self.addElectricMeterToLogicMock('Name', 1, 1, False, 3)
