@@ -407,15 +407,15 @@ class PatchElectricMeterApiTest(unittest.TestCase):
             'pin': 5,
             'active_low': True
         }
-        meter, meter_id = self.addElectricMeterToLogicMock(patch_json['name'], patch_json['value'],
-                                         patch_json['pin'], patch_json['active_low'], 3)
+        meter, meter_id = self.addElectricMeterToLogicMock(patch_json['value'],
+                                         patch_json['pin'], patch_json['active_low'], patch_json['name'], 3)
         # Test
         response = self.app.patch('/electric-meter?id=' + str(meter_id), json=patch_json)
 
         self.assertEqual(304, response.status_code)
 
     def testPatchElectricMeter_notModifiedEmptyRequest(self):
-        meter, meter_id = self.addElectricMeterToLogicMock('name', 3.0, 4, False, 3)
+        meter, meter_id = self.addElectricMeterToLogicMock(3.0, 4, False, 'name', 3)
 
         # Test
         response = self.app.patch('/electric-meter?id=' + str(meter_id))
@@ -441,7 +441,7 @@ class PatchElectricMeterApiTest(unittest.TestCase):
             self.assertNotEqual(len(info), 0)
 
     def testPatchElectricMeter_badRequestInvalidChange(self):
-        electric_meter, meter_id = self.addElectricMeterToLogicMock('Name', 1, 1, False, 3)
+        electric_meter, meter_id = self.addElectricMeterToLogicMock(1, 1, False, 'Name', 3)
 
         # Test
         response = self.app.patch('/electric-meter?id=' + str(meter_id), json={
@@ -461,7 +461,7 @@ class PatchElectricMeterApiTest(unittest.TestCase):
             self.assertNotEqual(len(info), 0)
 
     def testPatchElectricMeter_badRequestChangeInvalidField(self):
-        electric_meter, meter_id = self.addElectricMeterToLogicMock('Name', 1, 1, False, 3)
+        electric_meter, meter_id = self.addElectricMeterToLogicMock(1, 1, False, 'Name', 3)
 
         # Test
         response = self.app.patch('/electric-meter?id=' + str(meter_id), json={
@@ -496,7 +496,7 @@ class PatchElectricMeterApiTest(unittest.TestCase):
         self.assertEqual({}, content['info'])
 
     def testPatchElectricMeter_success(self):
-        electric_meter, meter_id = self.addElectricMeterToLogicMock('Name', 1, 1, False, 3)
+        electric_meter, meter_id = self.addElectricMeterToLogicMock(1, 1, False, 'Name', 3)
 
         patch_name = 'Name2'
         patch_pin = 2
