@@ -344,12 +344,15 @@ class DeleteElectricMeterApiTest(unittest.TestCase):
         response = self.app.delete('/electric-meter?id=' + 'INVALID')
 
         # Assert
-        self.assertEqual(404, response.status_code)
+        self.assertEqual(400, response.status_code)
 
         content = json.loads(response.data)
-        self.assertEqual('ELECTRIC_METER_NOT_FOUND', content['code'])
-        self.assertEqual('no electric meter with requested id exists', content['message'])
-        self.assertEqual({}, content['info'])
+        self.assertEqual('INVALID_PARAMETER', content['code'])
+        self.assertListEqual(sorted(['id']), sorted(content['parameter']))
+        self.assertListEqual(sorted(content['parameter']), sorted(list(content['info'].keys())))
+        for info in content['info'].values():
+            self.assertIsNotNone(info)
+            self.assertNotEqual(len(info), 0)
 
     def testDeleteEelectricMeter_badRequest(self):
         response = self.app.delete('/electric-meter')
