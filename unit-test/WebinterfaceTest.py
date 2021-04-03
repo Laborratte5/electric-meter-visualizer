@@ -454,8 +454,31 @@ class PatchElectricMeterApiTest(unittest.TestCase):
 
         content = json.loads(response.data)
         self.assertEqual('INVALID_PARAMETER', content['code'])
-        self.assertEqual('pin number out of range', content['message'])
-        self.assertEqual({'parameter_name': 'pin'}, content['info'])
+        self.assertListEqual(sorted(['pin']), sorted(content['parameter']))
+        self.assertListEqual(sorted(content['parameter']), sorted(list(content['info'].keys())))
+        for info in content['info'].values():
+            self.assertIsNotNone(info)
+            self.assertNotEqual(len(info), 0)
+
+    def testPatchElectricMeter_badRequestChangeInvalidField(self):
+        electric_meter, meter_id = self.addElectricMeterToLogicMock('Name', 1, 1, False, 3)
+
+        # Test
+        response = self.app.patch('/electric-meter?id=' + str(meter_id), json={
+            'name': 'Name2',
+            'current_value': -5
+        })
+
+        # Assert
+        self.assertEqual(400, response.status_code)
+
+        content = json.loads(response.data)
+        self.assertEqual('INVALID_PARAMETER', content['code'])
+        self.assertListEqual(sorted(['current_value']), sorted(content['parameter']))
+        self.assertListEqual(sorted(content['parameter']), sorted(list(content['info'].keys())))
+        for info in content['info'].values():
+            self.assertIsNotNone(info)
+            self.assertNotEqual(len(info), 0)
 
     def testPatchElectricMeter_notFound(self):
         patch_json = {
