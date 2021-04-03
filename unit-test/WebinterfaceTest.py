@@ -412,7 +412,7 @@ class PatchElectricMeterApiTest(unittest.TestCase):
         # Test
         response = self.app.patch('/electric-meter?id=' + str(meter_id), json=patch_json)
 
-        self.assertEqual(304, response.status_code)
+        self.assertEqual(204, response.status_code)
 
     def testPatchElectricMeter_notModifiedEmptyRequest(self):
         meter, meter_id = self.addElectricMeterToLogicMock(3.0, 4, False, 'name', 3)
@@ -420,7 +420,7 @@ class PatchElectricMeterApiTest(unittest.TestCase):
         # Test
         response = self.app.patch('/electric-meter?id=' + str(meter_id))
 
-        self.assertEqual(304, response.status_code)
+        self.assertEqual(204, response.status_code)
 
     def testPatchElectricMeter_badRequestNoId(self):
         # Test
