@@ -127,6 +127,7 @@ def delete_electric_meter():
     except KeyError:
         abort_meter_not_found('no electric meter with requested id exists')
 
+
 @app.route('/electric-meter', methods=['PATCH'])
 def change_electric_meter():
     meter_id = RequestElectricMeterSchema().load(request.args).get('id')
