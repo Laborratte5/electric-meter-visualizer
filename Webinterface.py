@@ -90,7 +90,7 @@ def get_electric_meter():
             electric_meter = [(id, logic.get_electric_meter(id))]  # Wrap meter in list of (id, meter) tupel
             return create_json_response(electric_meter)
         except KeyError:
-            abort_meter_not_found('no electric meter with requested id exist')
+            abort_meter_not_found('no electric meter with requested id exists')
         except ValueError:
             abort_meter_not_found('electric meter id must be a integer')
     # No id means return all electric meter
