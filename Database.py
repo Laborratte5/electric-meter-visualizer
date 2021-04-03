@@ -9,6 +9,7 @@ class Database:
         with open(file_name, 'w') as f:
             f.close()
         database = Database(file_name, data_per_hour, keep_raw, keep_day, keep_month, keep_year, keep_years)
+        database._save_database()
         return database
 
     @classmethod
