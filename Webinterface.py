@@ -1,3 +1,5 @@
+from deprecated import deprecated
+
 from flask import Flask, render_template, request, abort, make_response, jsonify
 from marshmallow import Schema, fields, ValidationError, validate
 
@@ -238,7 +240,8 @@ def abort_meter_not_found(info):
     abort(response)
 
 
-def make_error_response(error_code, message, info=None):
+@deprecated()
+def make_error_response(api_error_code, message, info=None, error_code=400):
     if info is None:
         info = {}
 
@@ -249,6 +252,8 @@ def make_error_response(error_code, message, info=None):
     }
 
 
+
+@deprecated("Use marshmallow to convert electric meters to dict/json")
 def electric_meter_to_dic(meter_id, electric_meter):
     return {
         'id': meter_id,
