@@ -263,12 +263,13 @@ def make_error_response(api_error_code, message, info=None, error_code=400):
     if info is None:
         info = {}
 
-    return {
-        'code': error_code,
+    response = make_response({
+        'code': api_error_code,
         'message': message,
         'info': info
-    }
+    }, error_code)
 
+    abort(response)
 
 
 @deprecated("Use marshmallow to convert electric meters to dict/json")
