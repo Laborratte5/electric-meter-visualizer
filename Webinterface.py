@@ -231,8 +231,7 @@ def abort_parameter(info, parameter_list):
 
 
 def abort_meter_not_found(info):
-    response = make_response(make_error_response('ELECTRIC_METER_NOT_FOUND', info), 404)
-    abort(response)
+    make_error_response('ELECTRIC_METER_NOT_FOUND', info, error_code=404)
 
 
 @deprecated()
