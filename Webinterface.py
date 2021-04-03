@@ -129,7 +129,30 @@ def delete_electric_meter():
 
 @app.route('/electric-meter', methods=['PATCH'])
 def change_electric_meter():
-    abort(501)
+    meter_id = RequestElectricMeterSchema().load(request.args).get('id')
+
+    if request.get_json() is None or len(request.get_json().keys()) == 0:
+        return '', 204
+
+    changes = AddElectricMeterSchema().load(request.get_json(), partial=True)
+
+    try:
+        value = changes.get('value')
+        pin = changes.get('pin')
+        active_low = changes.get('active_low')
+        name = changes.get('name')
+
+        changed_meter = logic.change_electric_meter(meter_id, value, pin, active_low, name)
+
+        if changed_meter is None:
+            return '', 204
+
+        return {
+            'patched_meter': electric_meter_to_dic(meter_id, changed_meter)
+        }
+    except KeyError:
+        abort_meter_not_found('no electric meter with requested id exists')
+
 """
     # TODO
     params = parse_parameter_json(('id', int))
