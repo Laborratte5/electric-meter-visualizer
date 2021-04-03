@@ -154,38 +154,6 @@ def change_electric_meter():
     except KeyError:
         abort_meter_not_found('no electric meter with requested id exists')
 
-"""
-    # TODO
-    params = parse_parameter_json(('id', int))
-
-    id = params['id']
-    value = None
-    pin = None
-    active_low = None
-    name = None
-
-    # TODO check parameter values
-    if 'value' in request.args.keys():
-        params = parse_parameter_json(('value', float))
-        value = params['value']
-    if 'pin' in request.args.keys():
-        params = parse_parameter_json(('pin', int))
-        pin = params['pin']
-    if 'active-low' in request.args.keys():
-        params = parse_parameter_json(('active-low', bool))
-        active_low = params['active-low']
-    if 'name' in request.args.keys():
-        params = parse_parameter_json(('name', str))
-        name = params['name']
-
-    try:
-        changed_meter = logic.change_electric_meter(id, value, pin, active_low, name)
-        return electric_meter_to_dic(changed_meter)
-    except KeyError as e:
-        pass
-        #abort_no_electric_meter_with_id(id)
-"""
-
 
 @app.errorhandler(ValidationError)
 def handle_validation_error(error):
@@ -198,62 +166,6 @@ def handle_validation_error(error):
     return response, 400
 
 # Helper functions
-# TODO remove parse_parameter_json_function
-"""
-def parse_parameter_json(*expected_parameter):
-    arguments = request.args
-
-    # Check if parameter is of type 'param_type'
-    def is_param_of_type(param_name, param_type):
-        param = arguments[param_name]
-        # Test bool
-        if param_type is bool:
-            return param in ('True', 'true', 'False', 'false')
-        else:
-            # Test other types by trying to cast param
-            try:
-                param_type(param)
-                return True
-            except ValueError:
-                return False
-
-    # Parse param into specified param_type
-    def parse_param(param_name, param_type):
-        param = arguments[param_name]
-        # Special case for parsing bool
-        if param_type is bool:
-            return param in ('True', 'true')
-        return param_type(param)
-
-    # Create list of parameters missing in arguments
-    missing_parameters = [param for param, param_type in expected_parameter if param not in arguments.keys()]
-    # return json error
-    if len(missing_parameters) > 0:
-        abort_parameter('missing parameters', missing_parameters)
-
-    # Create list of parameters having the wrong type
-    invalid_types = [{"parameter": param, "expected_type": str(param_type)}
-                     for param, param_type in expected_parameter
-                     if not is_param_of_type(param, param_type)]
-
-    if len(invalid_types) > 0:
-        abort_parameter('invalid parameter type', invalid_types)
-
-    dic = {param_name: parse_param(param_name, param_type) for param_name, param_type in expected_parameter}
-    return dic
-"""
-
-
-def abort_parameter(info, parameter_list):
-    json_message = jsonify({
-        "code": 400,
-        "info": info,
-        "parameters": parameter_list
-    })
-    response = make_response(json_message, 400)
-    abort(response)
-
-
 def abort_meter_not_found(info):
     make_error_response('ELECTRIC_METER_NOT_FOUND', info, error_code=404)
 
