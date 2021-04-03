@@ -93,7 +93,7 @@ class GetElectricMeterApiTest(unittest.TestCase):
 
         content = json.loads(response.data)
         self.assertEqual('ELECTRIC_METER_NOT_FOUND', content['code'])
-        self.assertEqual('no electric meter with requested id exist', content['message'])
+        self.assertEqual('no electric meter with requested id exists', content['message'])
         self.assertEqual({}, content['info'])
 
     def testGetElectricMeter_negativeId(self):
@@ -492,7 +492,7 @@ class PatchElectricMeterApiTest(unittest.TestCase):
 
         content = json.loads(response.data)
         self.assertEqual('ELECTRIC_METER_NOT_FOUND', content['code'])
-        self.assertEqual('no electric meter with requested id exist', content['message'])
+        self.assertEqual('no electric meter with requested id exists', content['message'])
         self.assertEqual({}, content['info'])
 
     def testPatchElectricMeter_success(self):
