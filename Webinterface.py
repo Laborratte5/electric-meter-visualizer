@@ -1,5 +1,5 @@
 import json
-import traceback
+from json.decoder import JSONDecodeError
 
 from deprecated import deprecated
 
@@ -135,10 +135,17 @@ def delete_electric_meter():
 def change_electric_meter():
     meter_id = RequestElectricMeterSchema().load(request.args).get('id')
 
-    if request.get_json() is None or len(request.get_json().keys()) == 0:
+    # Test if meter with given id exists
+    try:
+        logic.get_electric_meter(meter_id)
+    except KeyError:
+        abort_meter_not_found('no electric meter with requested id exists')
+
+    # Test if request contains payload with changes
+    if not bool(request.data) or len(request.get_json().keys()) == 0:
         return '', 204
 
-    changes = AddElectricMeterSchema().load(json.loads(request.data), partial=True)
+    changes = AddElectricMeterSchema().load(request.get_json(), partial=True)
 
     try:
         value = changes.get('value')
