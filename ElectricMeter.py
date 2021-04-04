@@ -22,7 +22,7 @@ class ElectricMeter:
         self.value = value
 
     def set_pin(self, pin):
-        if not 0 < pin < 20: # TODO exact values
+        if not 0 <= pin <= 27:
             raise ValueError('Electric meter pin out of range')
         self.pin = pin
 
