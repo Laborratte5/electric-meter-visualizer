@@ -20,7 +20,7 @@ class Logic:
 
     def __init__(self, config, development):
         self.development = development
-        self.state = State()
+        self.state = State.get_state()
 
         database_file = config.get_database_file()
         self.data_per_hour = config.get_data_per_hour()
