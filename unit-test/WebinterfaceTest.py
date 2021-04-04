@@ -509,6 +509,18 @@ class PatchElectricMeterApiTest(unittest.TestCase):
         self.assertEqual('no electric meter with requested id exists', content['message'])
         self.assertEqual({}, content['info'])
 
+    def testPatchElectricMeter_notFoundEmptyRequest(self):
+        # Test
+        response = self.app.patch('/electric-meter?id=' + '300', json={})
+
+        # Assert
+        self.assertEqual(404, response.status_code)
+
+        content = json.loads(response.data)
+        self.assertEqual('ELECTRIC_METER_NOT_FOUND', content['code'])
+        self.assertEqual('no electric meter with requested id exists', content['message'])
+        self.assertEqual({}, content['info'])
+
     def testPatchElectricMeter_success(self):
         electric_meter, meter_id = self.addElectricMeterToLogicMock(1, 1, False, 'Name', 3)
 
