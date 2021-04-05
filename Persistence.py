@@ -83,7 +83,7 @@ class StateJsonDecoder:
         return all(key in ('next_id', 'electric_meters') for key in o.keys())
 
     def is_electric_meter(self, o):
-        return all(key in ('id', 'name', 'value', 'pin', 'active_low', 'count') for key in o.keys())
+        return all(key in o.keys() for key in ('id', 'name', 'value', 'pin', 'active_low', 'count'))
 
     def decode_state(self, o):
         state = State()
