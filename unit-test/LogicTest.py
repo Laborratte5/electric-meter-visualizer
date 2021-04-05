@@ -209,14 +209,14 @@ class LogicTest(unittest.TestCase):
 
         # Check if Electric Meter data was changed
         em = self.logic.get_electric_meter(electric_meter_id)
-        self.assertEqual(em.value, new_value)
-        self.assertEqual(changed_meter.value, new_value)
-        self.assertEqual(em.pin, new_pin)
-        self.assertEqual(changed_meter.pin, new_pin)
-        self.assertEqual(em.active_low, True)
-        self.assertEqual(changed_meter.active_low, True)
-        self.assertEqual(em.name, 'changed_em1')
-        self.assertEqual(changed_meter.name, 'changed_em1')
+        self.assertEqual(new_value, em.value)
+        self.assertEqual(new_value, changed_meter.value)
+        self.assertEqual(new_pin, em.pin)
+        self.assertEqual(new_pin, changed_meter.pin)
+        self.assertEqual(True, em.active_low)
+        self.assertEqual(True, changed_meter.active_low)
+        self.assertEqual('changed_em1', em.name)
+        self.assertEqual('changed_em1', changed_meter.name)
 
     def test_change_electric_meter_no_change(self):
         # Setup
@@ -231,10 +231,10 @@ class LogicTest(unittest.TestCase):
         # Check if Electric Meter data was changed
         em = self.logic.get_electric_meter(electric_meter_id)
         self.assertIsNone(changed_meter)
-        self.assertEqual(em.value, 10)
-        self.assertEqual(em.pin, 1)
-        self.assertEqual(em.active_low, False)
-        self.assertEqual(em.name, 'em1')
+        self.assertEqual(10, em.value)
+        self.assertEqual(1, em.pin)
+        self.assertEqual(False, em.active_low)
+        self.assertEqual('em1', em.name)
 
     def test_partial_change_electric_meter_no_change(self):
         # Setup
@@ -249,10 +249,10 @@ class LogicTest(unittest.TestCase):
         # Check if Electric Meter data was changed
         em = self.logic.get_electric_meter(electric_meter_id)
         self.assertIsNone(changed_meter)
-        self.assertEqual(em.value, 10)
-        self.assertEqual(em.pin, 1)
-        self.assertEqual(em.active_low, False)
-        self.assertEqual(em.name, 'em1')
+        self.assertEqual(10, em.value)
+        self.assertEqual(1, em.pin)
+        self.assertEqual(False, em.active_low)
+        self.assertEqual('em1', em.name)
 
     def test_change_not_existing_meter(self):
         invalid_meter_id = -100
@@ -330,7 +330,7 @@ class LogicGetTest(unittest.TestCase):
 
         # Assertion
         self.assertIn(self.electric_meter_name, raw.keys())
-        self.assertEqual(len(raw[self.electric_meter_name]), len(self.db_mock.get_raw()[meter_id]))
+        self.assertEqual(len(self.db_mock.get_raw()[meter_id]), len(raw[self.electric_meter_name]))
         for idx, data_point in enumerate(raw[self.electric_meter_name]):
             self.assertEqual(self.db_mock.get_raw()[meter_id][idx]['value'], data_point['value'])
             self.assertEqual(self.db_mock.get_raw()[meter_id][idx]['timestamp'], data_point['timestamp'])
@@ -341,7 +341,7 @@ class LogicGetTest(unittest.TestCase):
 
         # Assertion
         self.assertIn(self.electric_meter_name, day.keys())
-        self.assertEqual(len(day[self.electric_meter_name]), len(self.db_mock.get_day()[meter_id]))
+        self.assertEqual(len(self.db_mock.get_day()[meter_id]), len(day[self.electric_meter_name]))
         for idx, data_point in enumerate(day[self.electric_meter_name]):
             self.assertEqual(self.db_mock.get_day()[meter_id][idx]['value'], data_point['value'])
             self.assertEqual(self.db_mock.get_day()[meter_id][idx]['timestamp'], data_point['timestamp'])
@@ -352,7 +352,7 @@ class LogicGetTest(unittest.TestCase):
 
         # Assertion
         self.assertIn(self.electric_meter_name, month.keys())
-        self.assertEqual(len(month[self.electric_meter_name]), len(self.db_mock.get_month()[meter_id]))
+        self.assertEqual(len(self.db_mock.get_month()[meter_id]), len(month[self.electric_meter_name]))
         for idx, data_point in enumerate(month[self.electric_meter_name]):
             self.assertEqual(self.db_mock.get_month()[meter_id][idx]['value'], data_point['value'])
             self.assertEqual(self.db_mock.get_month()[meter_id][idx]['timestamp'], data_point['timestamp'])
@@ -363,7 +363,7 @@ class LogicGetTest(unittest.TestCase):
 
         # Assertion
         self.assertIn(self.electric_meter_name, year.keys())
-        self.assertEqual(len(year[self.electric_meter_name]), len(self.db_mock.get_year()[meter_id]))
+        self.assertEqual(len(self.db_mock.get_year()[meter_id]), len(year[self.electric_meter_name]))
         for idx, data_point in enumerate(year[self.electric_meter_name]):
             self.assertEqual(self.db_mock.get_year()[meter_id][idx]['value'], data_point['value'])
             self.assertEqual(self.db_mock.get_year()[meter_id][idx]['timestamp'], data_point['timestamp'])
@@ -374,7 +374,7 @@ class LogicGetTest(unittest.TestCase):
 
         # Assertion
         self.assertIn(self.electric_meter_name, years.keys())
-        self.assertEqual(len(years[self.electric_meter_name]), len(self.db_mock.get_years()[meter_id]))
+        self.assertEqual(len(self.db_mock.get_years()[meter_id]), len(years[self.electric_meter_name]))
         for idx, data_point in enumerate(years[self.electric_meter_name]):
             self.assertEqual(self.db_mock.get_years()[meter_id][idx]['value'], data_point['value'])
             self.assertEqual(self.db_mock.get_years()[meter_id][idx]['timestamp'], data_point['timestamp'])
