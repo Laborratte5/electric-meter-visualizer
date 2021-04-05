@@ -111,7 +111,6 @@ def add_electric_meter():
     new_meter, id = logic.add_electric_meter(**meter_dict)
 
     json_response = {
-        "id": id,
         "new_meter": electric_meter_to_dic(id, new_meter)
     }
 
