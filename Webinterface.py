@@ -3,7 +3,7 @@ from json.decoder import JSONDecodeError
 
 from deprecated import deprecated
 
-from flask import Flask, render_template, request, abort, make_response, jsonify
+from flask import Flask, render_template, request, abort, make_response
 from marshmallow import Schema, fields, ValidationError, validate
 
 from ConfigLoader import Config
