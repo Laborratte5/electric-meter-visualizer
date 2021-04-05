@@ -12,6 +12,7 @@ def cleanup() -> None:
     if os.path.exists(Persistence.STATE_FILE):
         os.remove(Persistence.STATE_FILE)
 
+
 def create_state_file(next_id, meter_id, value, pin, active_low, name, count):
     json_data = \
         '''{{"next_id": {next_id}, 
@@ -54,7 +55,7 @@ class MyTestCase(unittest.TestCase):
         # Assert
         with open(Persistence.STATE_FILE) as state_file:
             obj = json.load(state_file)
-            self.assertEqual(str(obj['next_id']), str(next_id))
+            self.assertEqual(str(next_id), str(obj['next_id']))
 
     def test_load_next_id(self):
         # Setup
@@ -93,11 +94,11 @@ class MyTestCase(unittest.TestCase):
         # Assertion
         with open(Persistence.STATE_FILE) as state_file:
             obj = json.load(state_file)
-            self.assertEqual(str(obj['electric_meters'][0]['value']), str(value))
-            self.assertEqual(str(obj['electric_meters'][0]['pin']), str(pin))
-            self.assertEqual(str(obj['electric_meters'][0]['active_low']), str(active_low))
-            self.assertEqual(str(obj['electric_meters'][0]['name']), name)
-            self.assertEqual(str(obj['electric_meters'][0]['count']), str(count))
+            self.assertEqual(str(value), str(obj['electric_meters'][0]['value']))
+            self.assertEqual(str(pin), str(obj['electric_meters'][0]['pin']))
+            self.assertEqual(str(active_low), str(obj['electric_meters'][0]['active_low']))
+            self.assertEqual(name, str(obj['electric_meters'][0]['name']))
+            self.assertEqual(str(count), str(obj['electric_meters'][0]['count']))
 
     def test_load_electric_meter(self):
         # Setup
@@ -118,11 +119,11 @@ class MyTestCase(unittest.TestCase):
         loaded_meters = state.get_electric_meters()
         loaded_meter = loaded_meters[meter_id]
 
-        self.assertEqual(loaded_meter.value, value)
-        self.assertEqual(loaded_meter.pin, pin)
-        self.assertEqual(loaded_meter.active_low, active_low)
-        self.assertEqual(loaded_meter.name, name)
-        self.assertEqual(loaded_meter.count, count)
+        self.assertEqual(value, loaded_meter.value)
+        self.assertEqual(pin, loaded_meter.pin)
+        self.assertEqual(active_low, loaded_meter.active_low)
+        self.assertEqual(name, loaded_meter.name)
+        self.assertEqual(count, loaded_meter.count)
 
     def test_load_invalid_syntax_file(self):
         # Setup
@@ -174,7 +175,7 @@ class MyTestCase(unittest.TestCase):
         self.assertIsNotNone(state)
         self.assertIsNotNone(state.get_next_id())
         self.assertIsNotNone(state.get_electric_meters())
-        self.assertEqual(len(state.get_electric_meters()), 0)
+        self.assertEqual(0, len(state.get_electric_meters()))
 
 
 if __name__ == '__main__':
