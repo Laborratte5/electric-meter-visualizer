@@ -85,7 +85,8 @@ def get_electric_meter():
     if meter_id is not None:
         # Search for electric meter witch specific id
         try:
-            electric_meters = [(meter_id, logic.get_electric_meter(meter_id))]  # Wrap meter in list of (id, meter) tupel
+            # Wrap meter in list of (id, meter) tupel
+            electric_meters = [(meter_id, logic.get_electric_meter(meter_id))]
         except KeyError:
             abort_meter_not_found('no electric meter with requested id exists')
         except ValueError:
