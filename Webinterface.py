@@ -77,21 +77,15 @@ def years_data():
 # Electric meter API
 @app.route('/electric-meter', methods=['GET'])
 def get_electric_meter():
-    # TODO marshmallow
-    # Utility method to create a json response
-    def create_json_response(electric_meters):
-        return {
-            "total_number": len(electric_meters),
-            "electric_meters": [electric_meter_to_dic(meter_id, electric_meter)
-                                for meter_id, electric_meter in electric_meters]
-        }
+    meter_id = RequestElectricMeterSchema().load(request.args, partial=True).get('id')
+
+    electric_meters = []
+
     # Supplied id means return only electric meter with this id
-    if 'id' in request.args.keys():
+    if meter_id is not None:
         # Search for electric meter witch specific id
         try:
-            id = int(request.args['id'])
-            electric_meter = [(id, logic.get_electric_meter(id))]  # Wrap meter in list of (id, meter) tupel
-            return create_json_response(electric_meter)
+            electric_meters = [(meter_id, logic.get_electric_meter(meter_id))]  # Wrap meter in list of (id, meter) tupel
         except KeyError:
             abort_meter_not_found('no electric meter with requested id exists')
         except ValueError:
@@ -99,7 +93,12 @@ def get_electric_meter():
     # No id means return all electric meter
     else:
         electric_meters = logic.get_electric_meters()
-        return create_json_response(electric_meters)
+
+    return {
+        "total_number": len(electric_meters),
+        "electric_meters": [electric_meter_to_dic(meter_id, electric_meter)
+                            for meter_id, electric_meter in electric_meters]
+    }
 
 
 @app.route('/electric-meter', methods=['POST'])
