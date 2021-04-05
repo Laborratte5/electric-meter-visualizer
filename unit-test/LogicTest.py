@@ -236,6 +236,24 @@ class LogicTest(unittest.TestCase):
         self.assertEqual(em.active_low, False)
         self.assertEqual(em.name, 'em1')
 
+    def test_partial_change_electric_meter_no_change(self):
+        # Setup
+        electric_meter = ElectricMeterMockup(10, 1, False, 'em1')
+        electric_meter_id = 10
+        self.state_mock.electric_meters[electric_meter_id] = electric_meter
+        self.logic._next_id = electric_meter_id
+
+        # Change Electric Meter
+        changed_meter = self.logic.change_electric_meter(electric_meter_id, 10, None, None, 'em1')
+
+        # Check if Electric Meter data was changed
+        em = self.logic.get_electric_meter(electric_meter_id)
+        self.assertIsNone(changed_meter)
+        self.assertEqual(em.value, 10)
+        self.assertEqual(em.pin, 1)
+        self.assertEqual(em.active_low, False)
+        self.assertEqual(em.name, 'em1')
+
     def test_change_not_existing_meter(self):
         invalid_meter_id = -100
 
