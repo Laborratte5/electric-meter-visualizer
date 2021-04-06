@@ -21,18 +21,19 @@ def index():
 
 
 # Data API
-@app.route('/api/json/data')
+# TODO refactor data api
+@app.route('/data')
 def data():
     return 'data'
 
 
-@app.route('/api/json/data/raw')
+@app.route('/data/raw')
 def raw_data():
     data = logic.get_raw()
     return dict(data)
 
 
-@app.route('/api/json/data/day')
+@app.route('/data/day')
 def day_data():
     # TODO convert dict to dict better suitable for chart.js
     if 't' in request.args.keys():
@@ -43,12 +44,12 @@ def day_data():
     return dict(data)
 
 
-@app.route('/api/json/data/week')
+@app.route('/data/week')
 def week_data():
     return 'week data'
 
 
-@app.route('/api/json/data/month')
+@app.route('/data/month')
 def month_data():
     if 't' in request.args.keys():
         t_minus = int(request.args['t'])
@@ -58,7 +59,7 @@ def month_data():
     return dict(data)
 
 
-@app.route('/api/json/data/year')
+@app.route('/data/year')
 def year_data():
     if 't' in request.args.keys():
         t_minus = int(request.args['t'])
@@ -68,7 +69,7 @@ def year_data():
     return dict(data)
 
 
-@app.route('/api/json/data/years')
+@app.route('/data/years')
 def years_data():
     data = logic.get_years()
     return dict(data)
