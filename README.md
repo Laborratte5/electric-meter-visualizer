@@ -21,7 +21,7 @@ To add a electric meter
 POST /electric-meter
 ```
 with the payload
-```javascript
+```json
 {
   "name": "<the name of the electric meter>",
   "value": <the amount of kwh one turn of the wheel corresponds to>,
@@ -30,7 +30,7 @@ with the payload
 }
 ```
 The Server replies with either a `201 CREATED` and a json object representing the new added electric meter
-```javascript
+```json
 {
   "new_meter": {
     "id": <the id of the newly created electric meter>,
