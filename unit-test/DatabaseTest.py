@@ -1,6 +1,6 @@
-import datetime
+from datetime import datetime, timedelta
 import unittest
-from Database import Database
+from Database import Database, Archive
 import os
 
 
@@ -47,8 +47,7 @@ class DatabaseTest(unittest.TestCase):
         self.assertIn(123, [items['value'] for items in db.get_raw()['data1']])
         self.assertNotEqual(0, len([timestamp for value, timestamp in db.get_raw()['data1']]))
         # TODO vllt. bessere/schönere Art and timestamp zu kommen
-        self.assertEqual(type(datetime.datetime.now()), type([item['timestamp'] for item in db.get_raw()['data1']][0]))
-
+        self.assertEqual(type(datetime.now()), type([item['timestamp'] for item in db.get_raw()['data1']][0]))
 
     def test_add_data_raw(self):
 
@@ -104,6 +103,35 @@ class DatabaseTest(unittest.TestCase):
         self.assertIn('data1', self.db.get_raw().keys())
         self.db.remove_data_src('data1')
         self.assertNotIn('data1', self.db.get_raw().keys())
+
+
+class GetDataDatabaseTest(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.dph = 2
+        with open('test.json', 'w') as f:
+            f.write('x')
+        self.db = Database('test.json', self.dph, 3, 48, 30, 12, 3)
+        self.db.add_data_src('data1')
+        self.db.sync_file = False
+
+        datasource = Archive(self.dph, 3, 48, 30, 12, 3)
+
+        now = datetime.now()
+
+        datasource.raw = [(i, now + timedelta(minutes=60 / self.dph)) for i in range(datasource.keep_raw)]
+        datasource.day = [{'value': hour * 10, 'timestamp': datetime(2020, 10, hour//24 + 1, hour % 24, 00)}
+                          for hour in range(48)]
+        datasource.month = [{'value': day * 10, 'timestamp': datetime(2020, day//30 + 3, day % 30 + 1, 00, 00)}
+                            for day in range(60)]
+        datasource.year = [{'value': month * 10, 'timestamp': datetime(2020, month + 1, 1, 00, 00)}
+                           for month in range(12)]
+        datasource.years = [{'value': year * 10, 'timestamp': datetime(year + 1, 1, 1, 00, 00)}
+                            for year in range(3)]
+
+        self.db.datasources['data1'] = datasource
+
+        self.addCleanup(cleanup)
 
 
 if __name__ == '__main__':
