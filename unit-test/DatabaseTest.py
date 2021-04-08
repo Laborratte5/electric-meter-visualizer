@@ -112,24 +112,32 @@ class GetDataDatabaseTest(unittest.TestCase):
         with open('test.json', 'w') as f:
             f.write('x')
         self.db = Database('test.json', self.dph, 3, 48, 30, 12, 3)
-        self.db.add_data_src('data1')
+        self.datasrc = 'data1'
+        self.db.add_data_src(self.datasrc)
         self.db.sync_file = False
 
-        datasource = Archive(self.dph, 3, 48, 30, 12, 3)
+        self.datasource = Archive(self.dph, 3, 48, 30, 12, 3)
 
-        now = datetime.now()
+        self.datasource.raw = [(1, datetime(2020, 10, 30, 12, 00)),
+                               (2, datetime(2020, 10, 30, 12, 15)),
+                               (3, datetime(2020, 10, 30, 12, 30)),
+                               (4, datetime(2020, 10, 30, 12, 45)),
 
-        datasource.raw = [(i, now + timedelta(minutes=60 / self.dph)) for i in range(datasource.keep_raw)]
-        datasource.day = [{'value': hour * 10, 'timestamp': datetime(2020, 10, hour//24 + 1, hour % 24, 00)}
-                          for hour in range(48)]
-        datasource.month = [{'value': day * 10, 'timestamp': datetime(2020, day//30 + 3, day % 30 + 1, 00, 00)}
-                            for day in range(60)]
-        datasource.year = [{'value': month * 10, 'timestamp': datetime(2020, month + 1, 1, 00, 00)}
-                           for month in range(12)]
-        datasource.years = [{'value': year * 10, 'timestamp': datetime(year + 1, 1, 1, 00, 00)}
-                            for year in range(3)]
+                               (5, datetime(2020, 10, 30, 13, 00)),
+                               (6, datetime(2020, 10, 30, 13, 15)),
+                               (7, datetime(2020, 10, 30, 13, 30)),
+                               (8, datetime(2020, 10, 30, 13, 45)),
+                               ]
+        self.datasource.day = [(hour * 10, datetime(2020, 10, hour//24 + 1, hour % 24, 00))
+                               for hour in range(48)]
+        self.datasource.month = [(day * 10, datetime(2020, day//30 + 3, day % 30 + 1, 00, 00))
+                                 for day in range(60)]
+        self.datasource.year = [(month * 10, datetime(2020, month + 1, 1, 00, 00))
+                                for month in range(12)]
+        self.datasource.years = [(year * 10, datetime(year + 1, 1, 1, 00, 00))
+                                 for year in range(3)]
 
-        self.db.datasources['data1'] = datasource
+        self.db.datasources[self.datasrc] = self.datasource
 
         self.addCleanup(cleanup)
 
