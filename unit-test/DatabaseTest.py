@@ -141,6 +141,189 @@ class GetDataDatabaseTest(unittest.TestCase):
 
         self.addCleanup(cleanup)
 
+    # TODO test exceed upper bound
+    # TODO test beneath lower bound
+    # TODO test outside of data bounds
+
+    def test_get_raw_since(self):
+        # Test
+        data = self.db.get_raw(since=datetime(2020, 10, 30, 13, 00))[self.datasrc]
+
+        # Assert
+        self.assertEqual(4, len(data))
+        pairs = zip([self.datasource.raw[i] for i in range(4, 8)],
+                    [(data['value'], data['timestamp']) for data in data])
+        for expected, actual in pairs:
+            self.assertEqual(expected, actual)
+
+    def test_get_raw_until(self):
+        # Test
+        data = self.db.get_raw(until=datetime(2020, 10, 30, 13, 00))[self.datasrc]
+
+        # Assert
+        self.assertEqual(5, len(data))
+        pairs = zip([self.datasource.raw[i] for i in range(0, 5)],
+                    [(data['value'], data['timestamp']) for data in data])
+        for expected, actual in pairs:
+            self.assertEqual(expected, actual)
+
+    def test_get_raw_until_since(self):
+        # Test
+        data = self.db.get_raw(since=datetime(2020, 10, 30, 12, 30),
+                               until=datetime(2020, 10, 30, 13, 15))[self.datasrc]
+
+        # Assert
+        self.assertEqual(4, len(data))
+        pairs = zip([self.datasource.raw[i] for i in range(2, 6)],
+                    [(data['value'], data['timestamp']) for data in data])
+        for expected, actual in pairs:
+            print(expected, actual)
+            self.assertEqual(expected, actual)
+
+    def test_get_raw_invalid_until_since(self):
+        # Since datetime is after until date time
+        self.assertRaises(ValueError, self.db.get_raw,
+                          until=datetime(2020, 10, 30, 13, 15), since=datetime(2020, 10, 30, 12, 30))
+
+    def test_get_day_since(self):
+        data = self.db.get_day(since=datetime(2020, 10, 1, 15, 00))
+
+        # Assert
+        self.assertEqual(34, len(data))
+        pairs = zip([self.datasource.day[i] for i in range(14, 48)],
+                    [(data['value'], data['timestamp']) for data in data])
+        for expected, actual in pairs:
+            self.assertEqual(expected, actual)
+
+    def test_get_day_until(self):
+        data = self.db.get_day(until=datetime(2020, 10, 2, 12, 00))
+
+        # Assert
+        self.assertEqual(37, len(data))
+        pairs = zip([self.datasource.day[i] for i in range(0, 37)],
+                    [(data['value'], data['timestamp']) for data in data])
+        for expected, actual in pairs:
+            self.assertEqual(expected, actual)
+
+    def test_get_day_until_since(self):
+        data = self.db.get_day(since=datetime(2020, 10, 1, 12, 00), until=datetime(2020, 10, 2, 12, 00))
+
+        # Assert
+        self.assertEqual(25, len(data))
+        pairs = zip([self.datasource.day[i] for i in range(11, 36)],
+                    [(data['value'], data['timestamp']) for data in data])
+        for expected, actual in pairs:
+            self.assertEqual(expected, actual)
+
+    def test_get_day_invalid_until_since(self):
+        # Since datetime is after until date time
+        self.assertRaises(ValueError, self.db.get_day,
+                          until=datetime(2020, 10, 1, 12, 00), since=datetime(2020, 10, 2, 12, 00))
+
+    def test_get_month_since(self):
+        data = self.db.get_month(since=datetime(2020, 3, 15, 0, 00))
+
+        # Assert
+        self.assertEqual(46, len(data))
+        pairs = zip([self.datasource.month[i] for i in range(14, 60)],
+                    [(data['value'], data['timestamp']) for data in data])
+        for expected, actual in pairs:
+            self.assertEqual(expected, actual)
+
+    def test_get_month_until(self):
+        data = self.db.get_month(until=datetime(2020, 4, 15, 0, 00))
+
+        # Assert
+        self.assertEqual(45, len(data))
+        pairs = zip([self.datasource.month[i] for i in range(0, 45)],
+                    [(data['value'], data['timestamp']) for data in data])
+        for expected, actual in pairs:
+            self.assertEqual(expected, actual)
+
+    def test_get_month_until_since(self):
+        data = self.db.get_month(since=datetime(2020, 3, 15, 0, 00),
+                               until=datetime(2020, 4, 15, 0, 00))
+
+        # Assert
+        self.assertEqual(31, len(data))
+        pairs = zip([self.datasource.month[i] for i in range(14, 45)],
+                    [(data['value'], data['timestamp']) for data in data])
+        for expected, actual in pairs:
+            self.assertEqual(expected, actual)
+
+    def test_get_month_invalid_until_since(self):
+        self.assertRaises(ValueError, self.db.get_month,
+                          until=datetime(2020, 3, 15, 0, 00), since=datetime(2020, 4, 15, 0, 00))
+
+    def test_get_year_since(self):
+        data = self.db.get_year(since=datetime(2020, 6, 0, 0, 00))
+
+        # Assert
+        self.assertEqual(7, len(data))
+        pairs = zip([self.datasource.year[i] for i in range(5, 12)],
+                    [(data['value'], data['timestamp']) for data in data])
+        for expected, actual in pairs:
+            self.assertEqual(expected, actual)
+
+    def test_get_year_until(self):
+        data = self.db.get_year(until=datetime(2020, 6, 0, 0, 00))
+
+        # Assert
+        self.assertEqual(6, len(data))
+        pairs = zip([self.datasource.year[i] for i in range(0, 6)],
+                    [(data['value'], data['timestamp']) for data in data])
+        for expected, actual in pairs:
+            self.assertEqual(expected, actual)
+
+    def test_get_year_until_since(self):
+        data = self.db.get_year(since=datetime(2020, 3, 0, 0, 00),
+                                until=datetime(2020, 9, 0, 0, 00))
+
+        # Assert
+        self.assertEqual(7, len(data))
+        pairs = zip([self.datasource.year[i] for i in range(2, 9)],
+                    [(data['value'], data['timestamp']) for data in data])
+        for expected, actual in pairs:
+            self.assertEqual(expected, actual)
+
+    def test_get_year_invalid_until_since(self):
+        self.assertRaises(ValueError, self.db.get_year,
+                          until=datetime(2020, 3, 0, 0, 00), since=datetime(2020, 9, 0, 0, 00))
+
+    def test_get_years_since(self):
+        data = self.db.get_years(since=datetime(2, 1, 1, 00, 00))
+
+        # Assert
+        self.assertEqual(2, len(data))
+        pairs = zip([self.datasource.years[i] for i in range(1, 3)],
+                    [(data['value'], data['timestamp']) for data in data])
+        for expected, actual in pairs:
+            self.assertEqual(expected, actual)
+
+    def test_get_years_until(self):
+        data = self.db.get_years(until=datetime(2, 1, 1, 00, 00))
+
+        # Assert
+        self.assertEqual(2, len(data))
+        pairs = zip([self.datasource.years[i] for i in range(0, 2)],
+                    [(data['value'], data['timestamp']) for data in data])
+        for expected, actual in pairs:
+            self.assertEqual(expected, actual)
+
+    def test_get_years_until_since(self):
+        data = self.db.get_years(since=datetime(2, 1, 1, 00, 00), until=datetime(2, 1, 1, 00, 00))
+
+        # Assert
+        self.assertEqual(1, len(data))
+        pairs = zip([self.datasource.years[i] for i in range(1, 2)],
+                    [(data['value'], data['timestamp']) for data in data])
+        for expected, actual in pairs:
+            self.assertEqual(expected, actual)
+
+    def test_get_years_invalid_until_since(self):
+        self.assertRaises(ValueError, self.db.get_month,
+                          until=datetime(1, 1, 1, 0, 00), since=datetime(2, 1, 1, 0, 0))
+
 
 if __name__ == '__main__':
     unittest.main()
