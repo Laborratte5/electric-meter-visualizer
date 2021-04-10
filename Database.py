@@ -51,27 +51,27 @@ class Database:
                 json.dump(self, f, cls=DatabaseJsonEncoder)
 
     # Getter
-    def get_raw(self):
+    def get_raw(self, since=None, until=None):
         # get data for each datasource and put it in a dict
         return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_raw()]
                 for data_src, data in self.datasources.items()}
 
-    def get_day(self):
+    def get_day(self, since=None, until=None):
         # get data for each datasource and put it in a dict
         return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_day()]
                 for data_src, data in self.datasources.items()}
 
-    def get_month(self):
+    def get_month(self, since=None, until=None):
         # get data for each datasource and put it in a dict
         return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_month()]
                 for data_src, data in self.datasources.items()}
 
-    def get_year(self):
+    def get_year(self, since=None, until=None):
         # get data for each datasource and put it in a dict
         return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_year()]
                 for data_src, data in self.datasources.items()}
 
-    def get_years(self):
+    def get_years(self, since=None, until=None):
         # get data for each datasource and put it in a dict
         return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_years()]
                 for data_src, data in self.datasources.items()}
@@ -156,22 +156,23 @@ class Archive:
             self.years_counter = 0
             self.years_sum = 0
 
-    def get_raw(self, delta=0):
+    def get_raw(self, since=None, until=None):
         return self.raw
 
-    def get_day(self, delta=0):
+    def get_day(self, since=None, until=None):
         return self.day + [(self.day_sum, datetime.now())]
 
-    def get_month(self, delta=0):
+    def get_month(self, since=None, until=None):
         return self.month + [(self.month_sum, datetime.now())]
 
-    def get_year(self, delta=0):
+    def get_year(self, since=None, until=None):
         return self.year + [(self.year_sum, datetime.now())]
 
-    def get_years(self, delta=0):
+    def get_years(self, since=None, until=None):
         return self.years + [(self.years_sum, datetime.now())]
 
 
+# TODO refactor use marshmallow
 class DatabaseJsonEncoder(json.JSONEncoder):
 
     def encode_database(self, db):
@@ -221,6 +222,7 @@ class DatabaseJsonEncoder(json.JSONEncoder):
             return json.JSONEncoder.default(self, o)
 
 
+# TODO refactor use marshmallow
 class DatabaseJsonDecoder:
 
     def __init__(self):
