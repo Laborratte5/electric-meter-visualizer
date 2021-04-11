@@ -183,14 +183,14 @@ class GetDataDatabaseTest(unittest.TestCase):
     def test_get_raw_invalid_until_since(self):
         # Since datetime is after until date time
         self.assertRaises(ValueError, self.db.get_raw,
-                          until=datetime(2020, 10, 30, 13, 15), since=datetime(2020, 10, 30, 12, 30))
+                          until=datetime(2020, 10, 30, 12, 15), since=datetime(2020, 10, 30, 13, 30))
 
     def test_get_day_since(self):
         data = self.db.get_day(since=datetime(2020, 10, 1, 15, 00))[self.datasrc]
 
         # Assert
         self.assertEqual(34, len(data))
-        pairs = zip([self.datasource.day[i] for i in range(14, 48)],
+        pairs = zip([self.datasource.day[i] for i in range(15, 48)],
                     [(data['value'], data['timestamp']) for data in data])
         for expected, actual in pairs:
             self.assertEqual(expected, actual)
@@ -210,7 +210,7 @@ class GetDataDatabaseTest(unittest.TestCase):
 
         # Assert
         self.assertEqual(25, len(data))
-        pairs = zip([self.datasource.day[i] for i in range(11, 36)],
+        pairs = zip([self.datasource.day[i] for i in range(12, 36)],
                     [(data['value'], data['timestamp']) for data in data])
         for expected, actual in pairs:
             self.assertEqual(expected, actual)
@@ -224,7 +224,7 @@ class GetDataDatabaseTest(unittest.TestCase):
         data = self.db.get_month(since=datetime(2020, 3, 15, 0, 00))[self.datasrc]
 
         # Assert
-        self.assertEqual(46, len(data))
+        self.assertEqual(47, len(data))
         pairs = zip([self.datasource.month[i] for i in range(14, 60)],
                     [(data['value'], data['timestamp']) for data in data])
         for expected, actual in pairs:
@@ -259,7 +259,7 @@ class GetDataDatabaseTest(unittest.TestCase):
         data = self.db.get_year(since=datetime(2020, 6, 1, 0, 00))[self.datasrc]
 
         # Assert
-        self.assertEqual(7, len(data))
+        self.assertEqual(8, len(data))
         pairs = zip([self.datasource.year[i] for i in range(5, 12)],
                     [(data['value'], data['timestamp']) for data in data])
         for expected, actual in pairs:
@@ -294,7 +294,7 @@ class GetDataDatabaseTest(unittest.TestCase):
         data = self.db.get_years(since=datetime(2, 1, 1, 00, 00))[self.datasrc]
 
         # Assert
-        self.assertEqual(2, len(data))
+        self.assertEqual(3, len(data))
         pairs = zip([self.datasource.years[i] for i in range(1, 3)],
                     [(data['value'], data['timestamp']) for data in data])
         for expected, actual in pairs:
