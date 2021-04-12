@@ -52,30 +52,38 @@ class Database:
 
     # Getter
     def get_raw(self, since=None, until=None):
+        self.assert_since_until(since, until)
         # get data for each datasource and put it in a dict
         return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_raw()]
                 for data_src, data in self.datasources.items()}
 
     def get_day(self, since=None, until=None):
+        self.assert_since_until(since, until)
         # get data for each datasource and put it in a dict
         return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_day()]
                 for data_src, data in self.datasources.items()}
 
     def get_month(self, since=None, until=None):
+        self.assert_since_until(since, until)
         # get data for each datasource and put it in a dict
         return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_month()]
                 for data_src, data in self.datasources.items()}
 
     def get_year(self, since=None, until=None):
+        self.assert_since_until(since, until)
         # get data for each datasource and put it in a dict
         return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_year()]
                 for data_src, data in self.datasources.items()}
 
     def get_years(self, since=None, until=None):
+        self.assert_since_until(since, until)
         # get data for each datasource and put it in a dict
         return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_years()]
                 for data_src, data in self.datasources.items()}
 
+    def assert_since_until(self, since, until):
+        if since is not None and until is not None and until < since:
+            raise ValueError
 
 class Archive:
 
