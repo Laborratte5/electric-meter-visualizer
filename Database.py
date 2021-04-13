@@ -54,36 +54,49 @@ class Database:
     def get_raw(self, since=None, until=None):
         self.assert_since_until(since, until)
         # get data for each datasource and put it in a dict
-        return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_raw()]
+        return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_raw()
+                           if self.check_timestamp(timestamp, since, until)
+                           ]
                 for data_src, data in self.datasources.items()}
 
     def get_day(self, since=None, until=None):
         self.assert_since_until(since, until)
         # get data for each datasource and put it in a dict
-        return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_day()]
+        return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_day()
+                           if self.check_timestamp(timestamp, since, until)
+                           ]
                 for data_src, data in self.datasources.items()}
 
     def get_month(self, since=None, until=None):
         self.assert_since_until(since, until)
         # get data for each datasource and put it in a dict
-        return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_month()]
+        return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_month()
+                           if self.check_timestamp(timestamp, since, until)
+                           ]
                 for data_src, data in self.datasources.items()}
 
     def get_year(self, since=None, until=None):
         self.assert_since_until(since, until)
         # get data for each datasource and put it in a dict
-        return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_year()]
+        return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_year()
+                           if self.check_timestamp(timestamp, since, until)
+                           ]
                 for data_src, data in self.datasources.items()}
 
     def get_years(self, since=None, until=None):
         self.assert_since_until(since, until)
         # get data for each datasource and put it in a dict
-        return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_years()]
+        return {data_src: [{'value': value, 'timestamp': timestamp} for value, timestamp in data.get_years()
+                           if self.check_timestamp(timestamp, since, until)]
                 for data_src, data in self.datasources.items()}
 
     def assert_since_until(self, since, until):
         if since is not None and until is not None and until < since:
             raise ValueError
+
+    def check_timestamp(self, timestamp, since, until):
+        return (since is None or since <= timestamp) and (until is None or timestamp <= until)
+
 
 class Archive:
 
