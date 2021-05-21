@@ -104,23 +104,22 @@ class Logic:
             electric_meter.reset()
 
     # Data API
-    # TODO t_minus
-    def get_raw(self):
+    def get_raw(self, since=None, until=None):
         return {self.state.get_electric_meters()[datasource].name: data
-                for datasource, data in self.database.get_raw().items()}
+                for datasource, data in self.database.get_raw(since=since, until=until).items()}
 
-    def get_day(self, t_minus=0):
+    def get_day(self, since=None, until=None):
         return {self.state.get_electric_meters()[datasource].name: data
-                for datasource, data in self.database.get_day().items()}
+                for datasource, data in self.database.get_day(since=since, until=until).items()}
 
-    def get_month(self, t_minus=0):
+    def get_month(self, since=None, until=None):
         return {self.state.get_electric_meters()[datasource].name: data
-                for datasource, data in self.database.get_month().items()}
+                for datasource, data in self.database.get_month(since=since, until=until).items()}
 
-    def get_year(self, t_minus=0):
+    def get_year(self, since=None, until=None):
         return {self.state.get_electric_meters()[datasource].name: data
-                for datasource, data in self.database.get_year().items()}
+                for datasource, data in self.database.get_year(since=since, until=until).items()}
 
-    def get_years(self):
+    def get_years(self, since=None, until=None):
         return {self.state.get_electric_meters()[datasource].name: data
-                for datasource, data in self.database.get_years().items()}
+                for datasource, data in self.database.get_years(since=since, until=until).items()}
