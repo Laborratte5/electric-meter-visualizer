@@ -52,13 +52,13 @@ class DatabaseLogicTestMock:
     def add_data(self, data, data_src):
         self.data_sources[data_src].append(data)
 
-    def get_raw(self, delta=0):
+    def get_raw(self, since=None, until=None):
         return self.data_sources
 
 
 class DatabaseLogicGetTestMock:
 
-    def get_raw(self, delta=0):
+    def get_raw(self, since=None, until=None):
         return {10: [{'value': 1, 'timestamp': datetime(2020, 10, 30, 12, 00)},
                         {'value': 1, 'timestamp': datetime(2020, 10, 30, 12, 15)},
                         {'value': 1, 'timestamp': datetime(2020, 10, 30, 12, 30)},
@@ -70,20 +70,20 @@ class DatabaseLogicGetTestMock:
                         {'value': 2, 'timestamp': datetime(2020, 10, 30, 13, 45)},
                         ]}
 
-    def get_day(self, delta=0):
+    def get_day(self, since=None, until=None):
         return {10: [{'value': hour * 10, 'timestamp': datetime(2020, 10, hour//24 + 1, hour % 24, 00)}
                     for hour in range(48)]}
 
-    def get_month(self, delta=0):
+    def get_month(self, since=None, until=None):
         # Start with March to skip February because of 28 day instead of 30 or 31
         return {10: [{'value': day * 10, 'timestamp': datetime(2020, day//30 + 3, day % 30 + 1, 00, 00)}
                     for day in range(60)]}
 
-    def get_year(self, delta=0):
+    def get_year(self, since=None, until=None):
         return {10: [{'value': month * 10, 'timestamp': datetime(2020, month + 1, 1, 00, 00)}
                         for month in range(12)]}
 
-    def get_years(self, delta=0):
+    def get_years(self, since=None, until=None):
         return {10: [{'value': year * 10, 'timestamp': datetime(year + 1, 1, 1, 00, 00)}
                     for year in range(3)]}
 
