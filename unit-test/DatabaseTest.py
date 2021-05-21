@@ -134,7 +134,7 @@ class GetDataDatabaseTest(unittest.TestCase):
                                  for day in range(60)]
         self.datasource.year = [(month * 10, datetime(2020, month + 1, 1, 00, 00))
                                 for month in range(12)]
-        self.datasource.years = [(year * 10, datetime(year + 1, 1, 1, 00, 00))
+        self.datasource.years = [(year * 10, datetime(year + 2020, 1, 1, 00, 00))
                                  for year in range(3)]
 
         self.db.datasources[self.datasrc] = self.datasource
@@ -290,7 +290,7 @@ class GetDataDatabaseTest(unittest.TestCase):
                           until=datetime(2020, 3, 1, 0, 00), since=datetime(2020, 9, 1, 0, 00))
 
     def test_get_years_since(self):
-        data = self.db.get_years(since=datetime(2, 1, 1, 00, 00))[self.datasrc]
+        data = self.db.get_years(since=datetime(2021, 1, 1, 00, 00))[self.datasrc]
 
         # Assert
         self.assertEqual(3, len(data))
@@ -300,7 +300,7 @@ class GetDataDatabaseTest(unittest.TestCase):
             self.assertEqual(expected, actual)
 
     def test_get_years_until(self):
-        data = self.db.get_years(until=datetime(2, 1, 1, 00, 00))[self.datasrc]
+        data = self.db.get_years(until=datetime(2021, 1, 1, 00, 00))[self.datasrc]
 
         # Assert
         self.assertEqual(2, len(data))
@@ -310,7 +310,7 @@ class GetDataDatabaseTest(unittest.TestCase):
             self.assertEqual(expected, actual)
 
     def test_get_years_until_since(self):
-        data = self.db.get_years(since=datetime(2, 1, 1, 00, 00), until=datetime(2, 1, 1, 00, 00))[self.datasrc]
+        data = self.db.get_years(since=datetime(2021, 1, 1, 00, 00), until=datetime(2021, 1, 1, 00, 00))[self.datasrc]
 
         # Assert
         self.assertEqual(1, len(data))
