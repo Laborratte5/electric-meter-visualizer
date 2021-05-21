@@ -51,27 +51,26 @@ class LogicMock:
 
         return electric_meter
 
-    def get_raw(self):
+    def get_raw(self, since=None, until=None):
+        # TODO
+        pass
+
+    def get_day(self, since=None, until=None):
         raise NotImplemented
         # TODO
         pass
 
-    def get_day(self, t_minus=0):
+    def get_month(self, since=None, until=None):
         raise NotImplemented
         # TODO
         pass
 
-    def get_month(self, t_minus=0):
+    def get_year(self, since=None, until=None):
         raise NotImplemented
         # TODO
         pass
 
-    def get_year(self, t_minus=0):
-        raise NotImplemented
-        # TODO
-        pass
-
-    def get_years(self):
+    def get_years(self, since=None, until=None):
         raise NotImplemented
         # TODO
         pass
