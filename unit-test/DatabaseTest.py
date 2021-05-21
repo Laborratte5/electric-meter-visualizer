@@ -177,7 +177,6 @@ class GetDataDatabaseTest(unittest.TestCase):
         pairs = zip([self.datasource.raw[i] for i in range(2, 6)],
                     [(data['value'], data['timestamp']) for data in data])
         for expected, actual in pairs:
-            print(expected, actual)
             self.assertEqual(expected, actual)
 
     def test_get_raw_invalid_until_since(self):
