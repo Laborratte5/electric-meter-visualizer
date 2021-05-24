@@ -1,6 +1,7 @@
 import json
 import os
 import unittest
+from datetime import datetime
 
 import Webinterface
 from ElectricMeterMockup import ElectricMeterMockup
@@ -53,25 +54,40 @@ class LogicMock:
 
     def get_raw(self, since=None, until=None):
         # TODO
+        return {'Electric-meter_1': [
+            {'value': 100, 'timestamp': datetime(2021, 5, 8, 23, 30)},
+            {'value': 200, 'timestamp': datetime(2021, 5, 8, 23, 45)},
+            {'value': 300, 'timestamp': datetime(2021, 5, 9, 00, 00)},
+            {'value': 400, 'timestamp': datetime(2021, 5, 9, 00, 15)},
+            {'value': 500, 'timestamp': datetime(2021, 5, 9, 00, 30)}
+        ]}
         pass
 
     def get_day(self, since=None, until=None):
-        raise NotImplemented
+        return {'Electric-meter_1': [
+            {'value': hour * 10, 'timestamp': datetime(2020, 10, hour//24 + 1, hour % 24, 00)} for hour in range(24)
+        ]}
         # TODO
         pass
 
     def get_month(self, since=None, until=None):
-        raise NotImplemented
+        return {'Electric-meter_1': [
+            {'value': day * 10, 'timestamp': datetime(2020, day//30 + 3, day % 30 + 1, 00, 00)} for day in range(60)
+        ]}
         # TODO
         pass
 
     def get_year(self, since=None, until=None):
-        raise NotImplemented
+        return {'Electric-meter_1': [
+            {'value': month * 10, 'timestamp': datetime(2020, month + 1, 1, 00, 00)} for month in range(12)
+        ]}
         # TODO
         pass
 
     def get_years(self, since=None, until=None):
-        raise NotImplemented
+        return {'Electric-meter_1': [
+            {'value': year * 10, 'timestamp': datetime(year + 2020, 1, 1, 00, 00)} for year in range(3)
+        ]}
         # TODO
         pass
 
