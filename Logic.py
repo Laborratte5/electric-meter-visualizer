@@ -105,21 +105,16 @@ class Logic:
 
     # Data API
     def get_raw(self, since=None, until=None):
-        return {self.state.get_electric_meters()[datasource].name: data
-                for datasource, data in self.database.get_raw(since=since, until=until).items()}
+        return {datasource: data for datasource, data in self.database.get_raw(since=since, until=until).items()}
 
     def get_day(self, since=None, until=None):
-        return {self.state.get_electric_meters()[datasource].name: data
-                for datasource, data in self.database.get_day(since=since, until=until).items()}
+        return {datasource: data for datasource, data in self.database.get_day(since=since, until=until).items()}
 
     def get_month(self, since=None, until=None):
-        return {self.state.get_electric_meters()[datasource].name: data
-                for datasource, data in self.database.get_month(since=since, until=until).items()}
+        return {datasource: data for datasource, data in self.database.get_month(since=since, until=until).items()}
 
     def get_year(self, since=None, until=None):
-        return {self.state.get_electric_meters()[datasource].name: data
-                for datasource, data in self.database.get_year(since=since, until=until).items()}
+        return {datasource: data for datasource, data in self.database.get_year(since=since, until=until).items()}
 
     def get_years(self, since=None, until=None):
-        return {self.state.get_electric_meters()[datasource].name: data
-                for datasource, data in self.database.get_years(since=since, until=until).items()}
+        return {datasource: data for datasource, data in self.database.get_years(since=since, until=until).items()}
