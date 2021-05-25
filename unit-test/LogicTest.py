@@ -336,14 +336,13 @@ class LogicGetTest(unittest.TestCase):
 
     def test_get_day(self):
         day = self.logic.get_day()
-        meter_id = 10
 
         # Assertion
         self.assertIn(self.meter_id, day.keys())
-        self.assertEqual(len(self.db_mock.get_day()[meter_id]), len(day[self.meter_id]))
+        self.assertEqual(len(self.db_mock.get_day()[self.meter_id]), len(day[self.meter_id]))
         for idx, data_point in enumerate(day[self.meter_id]):
-            self.assertEqual(self.db_mock.get_day()[meter_id][idx]['value'], data_point['value'])
-            self.assertEqual(self.db_mock.get_day()[meter_id][idx]['timestamp'], data_point['timestamp'])
+            self.assertEqual(self.db_mock.get_day()[self.meter_id][idx]['value'], data_point['value'])
+            self.assertEqual(self.db_mock.get_day()[self.meter_id][idx]['timestamp'], data_point['timestamp'])
 
     def test_get_month(self):
         month = self.logic.get_month()
