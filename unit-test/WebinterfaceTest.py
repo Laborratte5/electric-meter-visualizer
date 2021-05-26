@@ -572,5 +572,122 @@ class PatchElectricMeterApiTest(unittest.TestCase):
         return meter, meter_id
 
 
+class GetDataApiTest(unittest.TestCase):
+
+    def setUp(self) -> None:
+        if os.path.exists('database.json'):
+            os.remove('database.json')
+
+        self.logic_mock = LogicMock()
+        electric_meter, meter_id = self.logic_mock.add_electric_meter(2, 3, True, 'Electric-meter_1')
+        self.electric_meter = electric_meter
+        self.meter_id = meter_id
+        Webinterface.logic = self.logic_mock
+        app.config['TESTING'] = True
+        self.app = app.test_client()
+
+    def testGetDataRaw_noFilter(self):
+        # Test
+        response = self.app.get('/data/raw')
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.data), {
+            'power_usage': [
+                {
+                    'id': self.meter_id,
+                    'value': self.electric_meter.value,
+                    'pin': self.electric_meter.pin,
+                    'active_low': self.electric_meter.active_low,
+                    'name': self.electric_meter.name,
+                    'data': self.logic_mock.get_raw()['Electric-meter_1']
+                }
+            ]
+        })
+
+    # TODO get raw day since until since-until invalid-since-until
+
+    def testGetDataDay_noFilter(self):
+        # Test
+        response = self.app.get('/data/day')
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.data), {
+            'power_usage': [
+                {
+                    'id': self.meter_id,
+                    'value': self.electric_meter.value,
+                    'pin': self.electric_meter.pin,
+                    'active_low': self.electric_meter.active_low,
+                    'name': self.electric_meter.name,
+                    'data': self.logic_mock.get_day()['Electric-meter_1']
+                }
+            ]
+        })
+
+    # TODO get data day since until since-until invalid-since-until
+
+    def testGetDataMonth_noFilter(self):
+        # Test
+        response = self.app.get('/data/month')
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.data), {
+            'power_usage': [
+                {
+                    'id': self.meter_id,
+                    'value': self.electric_meter.value,
+                    'pin': self.electric_meter.pin,
+                    'active_low': self.electric_meter.active_low,
+                    'name': self.electric_meter.name,
+                    'data': self.logic_mock.get_month()['Electric-meter_1']
+                }
+            ]
+        })
+    # TODO get data month since until since-until invalid-since-until
+
+    def testGetDataYear_noFilter(self):
+        # Test
+        response = self.app.get('/data/year')
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.data), {
+            'power_usage': [
+                {
+                    'id': self.meter_id,
+                    'value': self.electric_meter.value,
+                    'pin': self.electric_meter.pin,
+                    'active_low': self.electric_meter.active_low,
+                    'name': self.electric_meter.name,
+                    'data': self.logic_mock.get_year()['Electric-meter_1']
+                }
+            ]
+        })
+
+    # TODO get data month since until since-until invalid-since-until
+
+    def testGetDataYears_noFilter(self):
+        # Test
+        response = self.app.get('/data/years')
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.data), {
+            'power_usage': [
+                {
+                    'id': self.meter_id,
+                    'value': self.electric_meter.value,
+                    'pin': self.electric_meter.pin,
+                    'active_low': self.electric_meter.active_low,
+                    'name': self.electric_meter.name,
+                    'data': self.logic_mock.get_years()['Electric-meter_1']
+                }
+            ]
+        })
+
+
 if __name__ == '__main__':
     unittest.main()
