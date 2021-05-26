@@ -587,94 +587,79 @@ class GetDataApiTest(unittest.TestCase):
         self.app = app.test_client()
 
     def testGetDataRaw_noFilter(self):
+        # Setup
+        data = []
+        for data_dict in self.logic_mock.get_raw()['Electric-meter_1']:
+            data.append({'value': data_dict['value'], 'timestamp': data_dict['timestamp'].isoformat()})
+
         # Test
         response = self.app.get('/data/raw')
 
         # Assert
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(json.loads(response.data), {
-            'power_usage': [
-                {
-                    'id': self.meter_id,
-                    'value': self.electric_meter.value,
-                    'pin': self.electric_meter.pin,
-                    'active_low': self.electric_meter.active_low,
-                    'name': self.electric_meter.name,
-                    'data': self.logic_mock.get_raw()['Electric-meter_1']
-                }
-            ]
-        })
+        self._assert_data(response, data)
 
     # TODO get raw day since until since-until invalid-since-until
 
     def testGetDataDay_noFilter(self):
+        # Setup
+        data = []
+        for data_dict in self.logic_mock.get_day()['Electric-meter_1']:
+            data.append({'value': data_dict['value'], 'timestamp': data_dict['timestamp'].isoformat()})
+
+
         # Test
         response = self.app.get('/data/day')
 
         # Assert
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(json.loads(response.data), {
-            'power_usage': [
-                {
-                    'id': self.meter_id,
-                    'value': self.electric_meter.value,
-                    'pin': self.electric_meter.pin,
-                    'active_low': self.electric_meter.active_low,
-                    'name': self.electric_meter.name,
-                    'data': self.logic_mock.get_day()['Electric-meter_1']
-                }
-            ]
-        })
+        self._assert_data(response, data)
 
     # TODO get data day since until since-until invalid-since-until
 
     def testGetDataMonth_noFilter(self):
+        # Setup
+        data = []
+        for data_dict in self.logic_mock.get_month()['Electric-meter_1']:
+            data.append({'value': data_dict['value'], 'timestamp': data_dict['timestamp'].isoformat()})
+
         # Test
         response = self.app.get('/data/month')
 
         # Assert
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(json.loads(response.data), {
-            'power_usage': [
-                {
-                    'id': self.meter_id,
-                    'value': self.electric_meter.value,
-                    'pin': self.electric_meter.pin,
-                    'active_low': self.electric_meter.active_low,
-                    'name': self.electric_meter.name,
-                    'data': self.logic_mock.get_month()['Electric-meter_1']
-                }
-            ]
-        })
+        self._assert_data(response, data)
     # TODO get data month since until since-until invalid-since-until
 
     def testGetDataYear_noFilter(self):
+        # Setup
+        data = []
+        for data_dict in self.logic_mock.get_year()['Electric-meter_1']:
+            data.append({'value': data_dict['value'], 'timestamp': data_dict['timestamp'].isoformat()})
+
         # Test
         response = self.app.get('/data/year')
 
         # Assert
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(json.loads(response.data), {
-            'power_usage': [
-                {
-                    'id': self.meter_id,
-                    'value': self.electric_meter.value,
-                    'pin': self.electric_meter.pin,
-                    'active_low': self.electric_meter.active_low,
-                    'name': self.electric_meter.name,
-                    'data': self.logic_mock.get_year()['Electric-meter_1']
-                }
-            ]
-        })
+        self._assert_data(response, data)
 
     # TODO get data month since until since-until invalid-since-until
 
     def testGetDataYears_noFilter(self):
+        # Setup
+        data = []
+        for data_dict in self.logic_mock.get_years()['Electric-meter_1']:
+            data.append({'value': data_dict['value'], 'timestamp': data_dict['timestamp'].isoformat()})
+
         # Test
         response = self.app.get('/data/years')
 
         # Assert
         self.assertEqual(response.status_code, 200)
+        self._assert_data(response, data)
+
+    def _assert_data(self, response, data):
         self.assertEqual(json.loads(response.data), {
             'power_usage': [
                 {
@@ -683,7 +668,7 @@ class GetDataApiTest(unittest.TestCase):
                     'pin': self.electric_meter.pin,
                     'active_low': self.electric_meter.active_low,
                     'name': self.electric_meter.name,
-                    'data': self.logic_mock.get_years()['Electric-meter_1']
+                    'data': data
                 }
             ]
         })
