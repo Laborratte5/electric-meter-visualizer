@@ -53,43 +53,33 @@ class LogicMock:
         return electric_meter
 
     def get_raw(self, since=None, until=None):
-        # TODO
-        return {'Electric-meter_1': [
+        return {11: [
             {'value': 100, 'timestamp': datetime(2021, 5, 8, 23, 30)},
             {'value': 200, 'timestamp': datetime(2021, 5, 8, 23, 45)},
             {'value': 300, 'timestamp': datetime(2021, 5, 9, 00, 00)},
             {'value': 400, 'timestamp': datetime(2021, 5, 9, 00, 15)},
             {'value': 500, 'timestamp': datetime(2021, 5, 9, 00, 30)}
         ]}
-        pass
 
     def get_day(self, since=None, until=None):
-        return {'Electric-meter_1': [
+        return {11: [
             {'value': hour * 10, 'timestamp': datetime(2020, 10, hour//24 + 1, hour % 24, 00)} for hour in range(24)
         ]}
-        # TODO
-        pass
 
     def get_month(self, since=None, until=None):
-        return {'Electric-meter_1': [
+        return {11: [
             {'value': day * 10, 'timestamp': datetime(2020, day//30 + 3, day % 30 + 1, 00, 00)} for day in range(60)
         ]}
-        # TODO
-        pass
 
     def get_year(self, since=None, until=None):
-        return {'Electric-meter_1': [
+        return {11: [
             {'value': month * 10, 'timestamp': datetime(2020, month + 1, 1, 00, 00)} for month in range(12)
         ]}
-        # TODO
-        pass
 
     def get_years(self, since=None, until=None):
-        return {'Electric-meter_1': [
+        return {11: [
             {'value': year * 10, 'timestamp': datetime(year + 2020, 1, 1, 00, 00)} for year in range(3)
         ]}
-        # TODO
-        pass
 
 
 class GetElectricMeterApiTest(unittest.TestCase):
@@ -589,7 +579,7 @@ class GetDataApiTest(unittest.TestCase):
     def testGetDataRaw_noFilter(self):
         # Setup
         data = []
-        for data_dict in self.logic_mock.get_raw()['Electric-meter_1']:
+        for data_dict in self.logic_mock.get_raw()[self.meter_id]:
             data.append({'value': data_dict['value'], 'timestamp': data_dict['timestamp'].isoformat()})
 
         # Test
@@ -604,7 +594,7 @@ class GetDataApiTest(unittest.TestCase):
     def testGetDataDay_noFilter(self):
         # Setup
         data = []
-        for data_dict in self.logic_mock.get_day()['Electric-meter_1']:
+        for data_dict in self.logic_mock.get_day()[self.meter_id]:
             data.append({'value': data_dict['value'], 'timestamp': data_dict['timestamp'].isoformat()})
 
 
@@ -620,7 +610,7 @@ class GetDataApiTest(unittest.TestCase):
     def testGetDataMonth_noFilter(self):
         # Setup
         data = []
-        for data_dict in self.logic_mock.get_month()['Electric-meter_1']:
+        for data_dict in self.logic_mock.get_month()[self.meter_id]:
             data.append({'value': data_dict['value'], 'timestamp': data_dict['timestamp'].isoformat()})
 
         # Test
@@ -634,7 +624,7 @@ class GetDataApiTest(unittest.TestCase):
     def testGetDataYear_noFilter(self):
         # Setup
         data = []
-        for data_dict in self.logic_mock.get_year()['Electric-meter_1']:
+        for data_dict in self.logic_mock.get_year()[self.meter_id]:
             data.append({'value': data_dict['value'], 'timestamp': data_dict['timestamp'].isoformat()})
 
         # Test
@@ -649,7 +639,7 @@ class GetDataApiTest(unittest.TestCase):
     def testGetDataYears_noFilter(self):
         # Setup
         data = []
-        for data_dict in self.logic_mock.get_years()['Electric-meter_1']:
+        for data_dict in self.logic_mock.get_years()[self.meter_id]:
             data.append({'value': data_dict['value'], 'timestamp': data_dict['timestamp'].isoformat()})
 
         # Test
