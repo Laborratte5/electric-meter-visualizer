@@ -5,6 +5,7 @@ from datetime import datetime
 
 import Webinterface
 from ElectricMeterMockup import ElectricMeterMockup
+from Logic import ElectricMeterData
 from Webinterface import app
 
 
@@ -13,6 +14,7 @@ class LogicMock:
     def __init__(self):
         self._next_id = 10
         self.electric_meters = {}
+        self.data_electric_meter_id = 0
 
     def add_electric_meter(self, value, pin, active_low, name):
         self._next_id += 1
@@ -53,33 +55,41 @@ class LogicMock:
         return electric_meter
 
     def get_raw(self, since=None, until=None):
-        return {11: [
+        meter = self.get_electric_meter(self.data_electric_meter_id)
+        return [ElectricMeterData(self.data_electric_meter_id, meter, {self.data_electric_meter_id: [
             {'value': 100, 'timestamp': datetime(2021, 5, 8, 23, 30)},
             {'value': 200, 'timestamp': datetime(2021, 5, 8, 23, 45)},
             {'value': 300, 'timestamp': datetime(2021, 5, 9, 00, 00)},
             {'value': 400, 'timestamp': datetime(2021, 5, 9, 00, 15)},
             {'value': 500, 'timestamp': datetime(2021, 5, 9, 00, 30)}
-        ]}
+        ]})]
 
     def get_day(self, since=None, until=None):
-        return {11: [
+        meter = self.get_electric_meter(self.data_electric_meter_id)
+        return [ElectricMeterData(self.data_electric_meter_id, meter, {self.data_electric_meter_id: [
             {'value': hour * 10, 'timestamp': datetime(2020, 10, hour//24 + 1, hour % 24, 00)} for hour in range(24)
-        ]}
+        ]})]
 
     def get_month(self, since=None, until=None):
-        return {11: [
+        meter = self.get_electric_meter(self.data_electric_meter_id)
+        return [ElectricMeterData(self.data_electric_meter_id, meter, {self.data_electric_meter_id: [
             {'value': day * 10, 'timestamp': datetime(2020, day//30 + 3, day % 30 + 1, 00, 00)} for day in range(60)
-        ]}
+        ]})]
 
     def get_year(self, since=None, until=None):
-        return {11: [
+        meter = self.get_electric_meter(self.data_electric_meter_id)
+        return [ElectricMeterData(self.data_electric_meter_id, meter, {self.data_electric_meter_id: [
             {'value': month * 10, 'timestamp': datetime(2020, month + 1, 1, 00, 00)} for month in range(12)
-        ]}
+        ]})]
 
     def get_years(self, since=None, until=None):
-        return {11: [
+        meter = self.get_electric_meter(self.data_electric_meter_id)
+        return [ElectricMeterData(self.data_electric_meter_id, meter, {self.data_electric_meter_id: [
             {'value': year * 10, 'timestamp': datetime(year + 2020, 1, 1, 00, 00)} for year in range(3)
-        ]}
+        ]})]
+
+    def set_getDataElectricMeterId(self, meter_id):
+        self.data_electric_meter_id = meter_id
 
 
 class GetElectricMeterApiTest(unittest.TestCase):
@@ -570,6 +580,7 @@ class GetDataApiTest(unittest.TestCase):
 
         self.logic_mock = LogicMock()
         electric_meter, meter_id = self.logic_mock.add_electric_meter(2, 3, True, 'Electric-meter_1')
+        self.logic_mock.set_getDataElectricMeterId(meter_id)
         self.electric_meter = electric_meter
         self.meter_id = meter_id
         Webinterface.logic = self.logic_mock
@@ -578,10 +589,7 @@ class GetDataApiTest(unittest.TestCase):
 
     def testGetDataRaw_noFilter(self):
         # Setup
-        data = []
-        for data_dict in self.logic_mock.get_raw()[self.meter_id]:
-            data.append({'value': data_dict['value'], 'timestamp': data_dict['timestamp'].isoformat()})
-
+        data = self.logic_mock.get_raw()[0].data
         # Test
         response = self.app.get('/data/raw')
 
@@ -593,11 +601,7 @@ class GetDataApiTest(unittest.TestCase):
 
     def testGetDataDay_noFilter(self):
         # Setup
-        data = []
-        for data_dict in self.logic_mock.get_day()[self.meter_id]:
-            data.append({'value': data_dict['value'], 'timestamp': data_dict['timestamp'].isoformat()})
-
-
+        data = self.logic_mock.get_day()[0].data
         # Test
         response = self.app.get('/data/day')
 
@@ -609,10 +613,7 @@ class GetDataApiTest(unittest.TestCase):
 
     def testGetDataMonth_noFilter(self):
         # Setup
-        data = []
-        for data_dict in self.logic_mock.get_month()[self.meter_id]:
-            data.append({'value': data_dict['value'], 'timestamp': data_dict['timestamp'].isoformat()})
-
+        data = self.logic_mock.get_month()[0].data
         # Test
         response = self.app.get('/data/month')
 
@@ -623,10 +624,7 @@ class GetDataApiTest(unittest.TestCase):
 
     def testGetDataYear_noFilter(self):
         # Setup
-        data = []
-        for data_dict in self.logic_mock.get_year()[self.meter_id]:
-            data.append({'value': data_dict['value'], 'timestamp': data_dict['timestamp'].isoformat()})
-
+        data = self.logic_mock.get_year()[0].data
         # Test
         response = self.app.get('/data/year')
 
@@ -638,10 +636,7 @@ class GetDataApiTest(unittest.TestCase):
 
     def testGetDataYears_noFilter(self):
         # Setup
-        data = []
-        for data_dict in self.logic_mock.get_years()[self.meter_id]:
-            data.append({'value': data_dict['value'], 'timestamp': data_dict['timestamp'].isoformat()})
-
+        data = self.logic_mock.get_years()[0].data
         # Test
         response = self.app.get('/data/years')
 
@@ -650,6 +645,10 @@ class GetDataApiTest(unittest.TestCase):
         self._assert_data(response, data)
 
     def _assert_data(self, response, data):
+        expected_data = []
+        for entry in data:
+            expected_data.append({'value': entry['value'], 'timestamp': entry['timestamp'].isoformat()})
+
         self.assertEqual(json.loads(response.data), {
             'power_usage': [
                 {
@@ -658,7 +657,7 @@ class GetDataApiTest(unittest.TestCase):
                     'pin': self.electric_meter.pin,
                     'active_low': self.electric_meter.active_low,
                     'name': self.electric_meter.name,
-                    'data': data
+                    'data': expected_data
                 }
             ]
         })
