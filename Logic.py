@@ -105,16 +105,58 @@ class Logic:
 
     # Data API
     def get_raw(self, since=None, until=None):
-        return {datasource: data for datasource, data in self.database.get_raw(since=since, until=until).items()}
+        data = []
+        for meter_id, electric_meter in self.get_electric_meters():
+            data.append(ElectricMeterData(meter_id, electric_meter,
+                                          {datasource: data
+                                           for datasource, data
+                                           in self.database.get_raw(since=since, until=until).items()}))
+        return data
 
     def get_day(self, since=None, until=None):
-        return {datasource: data for datasource, data in self.database.get_day(since=since, until=until).items()}
+        data = []
+        for meter_id, electric_meter in self.get_electric_meters():
+            data.append(ElectricMeterData(meter_id, electric_meter,
+                                          {datasource: data
+                                           for datasource, data
+                                           in self.database.get_day(since=since, until=until).items()}))
+        return data
 
     def get_month(self, since=None, until=None):
-        return {datasource: data for datasource, data in self.database.get_month(since=since, until=until).items()}
+        data = []
+        for meter_id, electric_meter in self.get_electric_meters():
+            data.append(ElectricMeterData(meter_id, electric_meter,
+                                          {datasource: data
+                                           for datasource, data
+                                           in self.database.get_month(since=since, until=until).items()}))
+        return data
 
     def get_year(self, since=None, until=None):
-        return {datasource: data for datasource, data in self.database.get_year(since=since, until=until).items()}
+        data = []
+        for meter_id, electric_meter in self.get_electric_meters():
+            data.append(ElectricMeterData(meter_id, electric_meter,
+                                          {datasource: data
+                                           for datasource, data
+                                           in self.database.get_year(since=since, until=until).items()}))
+        return data
+
 
     def get_years(self, since=None, until=None):
-        return {datasource: data for datasource, data in self.database.get_years(since=since, until=until).items()}
+        data = []
+        for meter_id, electric_meter in self.get_electric_meters():
+            data.append(ElectricMeterData(meter_id, electric_meter,
+                                          {datasource: data
+                                           for datasource, data
+                                           in self.database.get_years(since=since, until=until).items()}))
+        return data
+
+
+class ElectricMeterData:
+
+    def __init__(self, meter_id, electric_meter, data):
+        self.id = meter_id
+        self.value = electric_meter.value
+        self.pin = electric_meter.pin
+        self.active_low = electric_meter.active_low
+        self.name = electric_meter.name
+        self.data = data[meter_id]
