@@ -31,10 +31,8 @@ def data():
 def raw_data():
     request_data = RequestDataSchema().load(request.args)
 
-    raw_data = logic.get_raw(request_data.get('since'), request_data.get('until'))
-
     data = PowerUsageData()
-    data.power_usage = raw_data
+    data.power_usage = logic.get_raw(request_data.get('since'), request_data.get('until'))
 
     return DataSchema().dumps(data)
 
@@ -43,10 +41,8 @@ def raw_data():
 def day_data():
     request_data = RequestDataSchema().load(request.args)
 
-    raw_data = logic.get_day(request_data.get('since'), request_data.get('until'))
-
     data = PowerUsageData()
-    data.power_usage = raw_data
+    data.power_usage = logic.get_day(request_data.get('since'), request_data.get('until'))
 
     return DataSchema().dumps(data)
 
@@ -60,10 +56,8 @@ def week_data():
 def month_data():
     request_data = RequestDataSchema().load(request.args)
 
-    raw_data = logic.get_month(request_data.get('since'), request_data.get('until'))
-
     data = PowerUsageData()
-    data.power_usage = raw_data
+    data.power_usage = logic.get_month(request_data.get('since'), request_data.get('until'))
 
     return DataSchema().dumps(data)
 
@@ -72,10 +66,8 @@ def month_data():
 def year_data():
     request_data = RequestDataSchema().load(request.args)
 
-    raw_data = logic.get_year(request_data.get('since'), request_data.get('until'))
-
     data = PowerUsageData()
-    data.power_usage = raw_data
+    data.power_usage = logic.get_year(request_data.get('since'), request_data.get('until'))
 
     return DataSchema().dumps(data)
 
@@ -84,10 +76,8 @@ def year_data():
 def years_data():
     request_data = RequestDataSchema().load(request.args)
 
-    raw_data = logic.get_years(request_data.get('since'), request_data.get('until'))
-
     data = PowerUsageData()
-    data.power_usage = raw_data
+    data.power_usage = logic.get_years(request_data.get('since'), request_data.get('until'))
 
     return DataSchema().dumps(data)
 
