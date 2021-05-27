@@ -4,7 +4,7 @@ from json.decoder import JSONDecodeError
 from deprecated import deprecated
 
 from flask import Flask, render_template, request, abort, make_response
-from marshmallow import Schema, fields, ValidationError, validate
+from marshmallow import Schema, fields, ValidationError, validate, validates_schema
 
 from ConfigLoader import Config
 from Logic import Logic
@@ -29,19 +29,26 @@ def data():
 
 @app.route('/data/raw')
 def raw_data():
-    data = logic.get_raw()
-    return dict(data)
+    request_data = RequestDataSchema().load(request.args)
+
+    raw_data = logic.get_raw(request_data.get('since'), request_data.get('until'))
+
+    data = PowerUsageData()
+    data.power_usage = raw_data
+
+    return DataSchema().dumps(data)
 
 
 @app.route('/data/day')
 def day_data():
-    # TODO convert dict to dict better suitable for chart.js
-    if 't' in request.args.keys():
-        t_minus = int(request.args['t'])
-        data = logic.get_day(t_minus)
-    else:
-        data = logic.get_day()
-    return dict(data)
+    request_data = RequestDataSchema().load(request.args)
+
+    raw_data = logic.get_day(request_data.get('since'), request_data.get('until'))
+
+    data = PowerUsageData()
+    data.power_usage = raw_data
+
+    return DataSchema().dumps(data)
 
 
 @app.route('/data/week')
@@ -51,28 +58,38 @@ def week_data():
 
 @app.route('/data/month')
 def month_data():
-    if 't' in request.args.keys():
-        t_minus = int(request.args['t'])
-        data = logic.get_month(t_minus)
-    else:
-        data = logic.get_month()
-    return dict(data)
+    request_data = RequestDataSchema().load(request.args)
+
+    raw_data = logic.get_month(request_data.get('since'), request_data.get('until'))
+
+    data = PowerUsageData()
+    data.power_usage = raw_data
+
+    return DataSchema().dumps(data)
 
 
 @app.route('/data/year')
 def year_data():
-    if 't' in request.args.keys():
-        t_minus = int(request.args['t'])
-        data = logic.get_year(t_minus)
-    else:
-        data = logic.get_year()
-    return dict(data)
+    request_data = RequestDataSchema().load(request.args)
+
+    raw_data = logic.get_year(request_data.get('since'), request_data.get('until'))
+
+    data = PowerUsageData()
+    data.power_usage = raw_data
+
+    return DataSchema().dumps(data)
 
 
 @app.route('/data/years')
 def years_data():
-    data = logic.get_years()
-    return dict(data)
+    request_data = RequestDataSchema().load(request.args)
+
+    raw_data = logic.get_years(request_data.get('since'), request_data.get('until'))
+
+    data = PowerUsageData()
+    data.power_usage = raw_data
+
+    return DataSchema().dumps(data)
 
 
 # Electric meter API
@@ -223,3 +240,41 @@ class AddElectricMeterSchema(Schema):
 class RequestElectricMeterSchema(Schema):
     id = fields.Integer(required=True, validate=validate.Range(min=0))
 
+
+class RequestDataSchema(Schema):
+    since = fields.DateTime()
+    until = fields.DateTime()
+
+    @validates_schema(skip_on_field_errors=True)
+    def validate_request(self, data, **kwargs):
+        until = data.get('until')
+        since = data.get('since')
+        if until is not None and since is not None and until < since:
+            raise ValidationError('Since timestamp must be before until timestamp')
+
+
+class PowerUsageDataSchema(Schema):
+    timestamp = fields.DateTime()
+    value = fields.Float()
+
+
+class PowerUsageSchema(Schema):
+    id = fields.Integer()
+    value = fields.Float()
+    pin = fields.Integer()
+    active_low = fields.Boolean()
+    name = fields.String()
+    data = fields.List(fields.Nested(PowerUsageDataSchema))
+
+
+class DataSchema(Schema):
+    power_usage = fields.List(cls_or_instance=fields.Nested(PowerUsageSchema))
+
+
+class PowerUsageData:
+
+    def __init__(self):
+        self.power_usage = []
+
+    def append(self, electric_meter_data):
+        self.power_usage.append(electric_meter_data)
