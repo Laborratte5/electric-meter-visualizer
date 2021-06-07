@@ -4,7 +4,7 @@ from PluginLoader import PluginLoader
 from testplugins.TestPlugin import Plugin
 
 
-class MyTestCase(unittest.TestCase):
+class PluginLoaderTest(unittest.TestCase):
 
     def setUp(self) -> None:
         # Created plugin config
