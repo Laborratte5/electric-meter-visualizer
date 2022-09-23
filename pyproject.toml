@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "electric-meter-visualizer"
+version = "0.1.0"
+description = "Webapp to visualize the consumption of electricity over time"
+authors = ["Laborratte5 <rirussi.rr@gmail.com>"]
+readme = "README.md"
+packages = [{include = "electric_meter_visualizer"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+Django = "^4.1.1"
+
+[tool.poetry.group.dev.dependencies]
+black = "^22.8.0"
+coverage = "^6.4.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
