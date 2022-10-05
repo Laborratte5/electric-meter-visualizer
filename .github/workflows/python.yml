@@ -11,13 +11,15 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install mypy poetry
+          python -m pip install mypy pylint poetry
       - name: Install project dependencies
         run: poetry install
       - uses: psf/black@stable
       - name: mypy
         run: |
           poetry run python -m mypy .
+      - name: pylint
+        run: poetry run python -m pylint electric_meter_visualizer
 
   test:
     runs-on: ubuntu-latest
