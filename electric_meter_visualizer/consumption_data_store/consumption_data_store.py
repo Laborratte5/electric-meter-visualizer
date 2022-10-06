@@ -1,6 +1,7 @@
 """
 This module represents a storage containing consumption data time series
 """
+import abc
 from dataclasses import dataclass
 import enum
 from datetime import datetime, timedelta
@@ -30,3 +31,20 @@ class Datapoint:
     timestamp: datetime
     timespan: timedelta
     value: dict[str, float]
+
+
+class Query(abc.ABC):
+    """
+    Abstract representation of a Query used by the ConsumptionDataStore to retrieve data
+    """
+
+    @abc.abstractmethod
+    def execute(self):
+        """
+        Execute the Query
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def __hash__(self):
+        raise NotImplementedError
