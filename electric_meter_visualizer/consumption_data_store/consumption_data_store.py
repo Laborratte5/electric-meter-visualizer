@@ -215,3 +215,86 @@ class ConsumptionDataStore(abc.ABC):
               The name of the bucket the data should be deleted from
         """
         raise NotImplementedError
+
+
+class BaseRetentionPolicy(RetentionPolicy):  # pylint: disable=R0903
+    """
+    Basic RetentionPolicy
+
+    This is the base class for simple RetentionPolicies with the following algorithm:
+    - get_data, used to return all relevant Datapoints
+    - aggregate, used to aggregate the datapoints based on the desired RetentionPolicy
+    - store, used to store the new aggregated Datapoints
+    - remove, used to remove the old datapoints based on the desired RetentionPolicy
+
+    Member variables:
+        - datastore a ConsumptionDataStore
+          Data store to which this RetentionPolicy applies
+        - source_bucket
+          Source bucket to which this RetentionPolicy applies
+        - destination_bucket
+          if this RetentionPolicy aggregates data from the source_bucket the aggregated
+          data should be written into the destination bucket
+    """
+
+    def __init__(
+        self,
+        datastore: ConsumptionDataStore,
+        source_bucket: str,
+        destination_bucket: str,
+    ):
+        self.datastore: ConsumptionDataStore = datastore
+        self.source_bucket: str = source_bucket
+        self.destination_bucket: str = destination_bucket
+
+    def execute(self):
+        """
+        Execute this RetentionPolicy by running the algorithm described above
+        """
+        data: list[Datapoint] = self._get_data()
+        aggregated_data: list[Datapoint] = self._aggregate(data)
+        self._store(aggregated_data)
+        self._remove(data)
+
+    def _get_data(self) -> list[Datapoint]:
+        """
+        Returns all Datapoints that are relevant for this RetentionPolicy
+
+        Returns: list of relevant Datapoints
+        """
+        raise NotImplementedError
+
+    def _aggregate(self, data_points: list[Datapoint]) -> list[Datapoint]:
+        """
+        Aggregates the given data according to retention policy
+
+        Arguments:
+            - data_points list of Datapoints
+              The Datapoints that should be aggregated according to this retention policy
+
+        Returns: list of aggregated Datapoints
+        """
+        raise NotImplementedError
+
+    def _store(self, result: list[Datapoint]):
+        """
+        Stores the given data into the destination_bucket of this RetentionPolicy
+
+        Arguments:
+            - result list of Datapoints
+              The processed Datapoints that should be stored into the destation_bucket
+        """
+        raise NotImplementedError
+
+    def _remove(self, old_data: list[Datapoint]):
+        """
+        Removes old Datapoints from this RetentionPolicy
+
+        Removes the old Datapoints (that got aggregated)
+        from the source_bucket of this RetentionPolicy
+
+        Arguments:
+            - old_data list of Datapoints
+              The old Datapoints that should be removed from the source_bucket
+        """
+        raise NotImplementedError
