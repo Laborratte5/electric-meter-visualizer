@@ -132,3 +132,86 @@ class RetentionPolicy(abc.ABC):  # pylint: disable=R0903
         leads to data points being deleted or aggregated
         """
         raise NotImplementedError
+
+
+class ConsumptionDataStore(abc.ABC):
+    """
+    This class is used to abstract the interaction with a ConsumptionDataStore
+    It provides methods to create, retrieve and delete consumption data points
+    """
+
+    def __init__(self):
+        self.__retention_policies: list[RetentionPolicy] = []
+
+    def add_retention_policy(self, retention_policy: RetentionPolicy):
+        """
+        Add a retention policy to this ConsumptionDataStore
+
+        All RetentionPolicies can be executed using the execute_retention_policy funtion
+        Note that individual RetentionPolicies still can be executed on demand using the
+        RetentionPolicy.execute() function
+
+        Arguments:
+            - retention_policy must be RetentionPolicy
+              The RetentionPolicy that should be added
+        """
+        self.__retention_policies.append(retention_policy)
+
+    def remove_retention_policy(self, retention_policy: RetentionPolicy):
+        """
+        Remove a retention policy from this ConsumptionDataStore
+
+        Note that individual RetentionPolicies still can be executed on demand using the
+        RetentionPolicy.execute() function
+
+        Arguments:
+            - retention_policy must be RetentionPolicy
+              The RetentionPolicy that should be removed
+        """
+        self.__retention_policies.remove(retention_policy)
+
+    def execute_retention_policy(self):
+        """
+        Execute all retention policies added to this ConsumptionData
+
+        Note that individual RetentionPolicies still can be executed on demand using the
+        RetentionPolicy.execute() function
+        """
+        for retention_policy in self.__retention_policies:
+            retention_policy.execute()
+
+    @abc.abstractmethod
+    def create_query(self) -> QueryBuilder:
+        """
+        Create a new QueryBuild
+
+        Returns: new QueryBuilder instance
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def put_data(self, datapoint: Datapoint, bucket: str):
+        """
+        Store a Datapoint in the specified bucket of this ConsumptionDataStore
+
+        Arguments:
+            - datapoint must be a Datapoint
+              The Datapoint that should be stored in this ConsumptionDataStore
+            - bucket must be a string
+              The name of the bucket the data should be put in
+              If no bucket with a given name exists a new bucket is created
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def delete_data(self, datapoint: Datapoint, bucket: str):
+        """
+        Delete a Datapoint from this ConsumptionDataStore
+
+        Arguments:
+            - datapoint must be a Datapoint
+              The Datapoint that should be deleted from this ConsumptionDataStore
+            - bucket must be a string
+              The name of the bucket the data should be deleted from
+        """
+        raise NotImplementedError
