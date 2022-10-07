@@ -298,3 +298,17 @@ class BaseRetentionPolicy(RetentionPolicy):  # pylint: disable=R0903
               The old Datapoints that should be removed from the source_bucket
         """
         raise NotImplementedError
+
+
+class ConsumptionDataStoreFactory(abc.ABC):  # pylint: disable=R0903
+    """
+    Used to initiate a concrete ConsumptionDataStore implementation
+    """
+
+    def create(self) -> ConsumptionDataStore:
+        """
+        Creates and initialize a concrete ConsumptionDataStore
+
+        Returns: Initialized instance of a concrete ConsumptionDataStore implementation
+        """
+        raise NotImplementedError
