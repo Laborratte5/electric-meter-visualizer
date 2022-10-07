@@ -116,3 +116,19 @@ class QueryBuilder(abc.ABC):
               The resulting datapoints contain one value for each aggregate_function.
         """
         raise NotImplementedError
+
+
+class RetentionPolicy(abc.ABC):  # pylint: disable=R0903
+    """
+    Representation of a retention policy
+    which specifies how to handle (older) data points
+    """
+
+    @abc.abstractmethod
+    def execute(self):
+        """
+        Executes this retention policy
+        Depending on the retention policy this
+        leads to data points being deleted or aggregated
+        """
+        raise NotImplementedError
