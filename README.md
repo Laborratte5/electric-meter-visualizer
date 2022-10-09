@@ -1,2 +1,3 @@
-# electric-meter-visualizer
-Webapp to Visualize the consumption of electricity over time
+# What is nrg-vizualizer?
+nrg-visualizer (pronounced Energy-Visualizer) is a program that
+aims to visualizer the energy consumption of a house over time.
