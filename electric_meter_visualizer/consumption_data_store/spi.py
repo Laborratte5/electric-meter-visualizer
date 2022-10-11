@@ -39,7 +39,7 @@ class Query(abc.ABC):
     """
 
     @abc.abstractmethod
-    def execute(self):
+    def execute(self) -> list[Datapoint]:
         """
         Execute the Query
         """
