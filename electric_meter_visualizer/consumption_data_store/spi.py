@@ -13,9 +13,10 @@ class AggregateFunction(enum.Enum):
     into a single datapoint
     """
 
+    RAW = enum.auto()
     SUM = enum.auto()
     AVERAGE = enum.auto()
-    MEAN = enum.auto()
+    MEDIAN = enum.auto()
     MIN = enum.auto()
     MAX = enum.auto()
     QUANTILE = enum.auto()
