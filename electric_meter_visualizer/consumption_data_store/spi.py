@@ -5,6 +5,7 @@ import abc
 from dataclasses import dataclass
 import enum
 from datetime import datetime, timedelta
+from uuid import UUID
 
 
 class AggregateFunction(enum.Enum):
@@ -29,9 +30,10 @@ class Datapoint:
     in the ConsumptionDataStore
     """
 
-    timestamp: datetime
-    timespan: timedelta
-    value: dict[str, float]
+    source: UUID
+    start: datetime
+    stop: datetime
+    value: dict[AggregateFunction, float]
 
 
 class Query(abc.ABC):
@@ -68,12 +70,12 @@ class QueryBuilder(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def filter_source(self, id_list: set[int]) -> "QueryBuilder":
+    def filter_source(self, id_list: set[UUID]) -> "QueryBuilder":
         """
         Filter the consumption data based on the source id
 
         Arguments:
-            - id_list must be a set of int
+            - id_list must be a set of UUIDs
               Only datapoints from sources contained in this list will be returned
         """
         raise NotImplementedError
