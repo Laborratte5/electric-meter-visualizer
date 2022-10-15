@@ -219,6 +219,14 @@ class ConsumptionDataStore(abc.ABC):
         """
         raise NotImplementedError
 
+    def close(self):
+        """Close this ConsumptionDataStore
+
+        Close this ConsumptionDataStore an release all resources that got aquired
+        during the usage of this ConsumptionDataStore.
+        After `close()` was called no further calls to this object are allowed
+        """
+
 
 class BaseRetentionPolicy(RetentionPolicy):  # pylint: disable=R0903
     """
