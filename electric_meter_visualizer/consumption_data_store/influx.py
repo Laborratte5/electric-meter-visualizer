@@ -27,8 +27,12 @@ class InfluxQuery(spi.Query):
         self.query: str = query
 
     def execute(self) -> list[spi.Datapoint]:
+        """Execute this query
+
+        Returns:
+            list[spi.Datapoint]: parsed query result
+        """
         # TODO implement
-        pass
 
     def __hash__(self):
         # TODO implement
