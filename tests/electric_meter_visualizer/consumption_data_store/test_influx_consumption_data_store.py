@@ -422,7 +422,7 @@ class QueryTest(unittest.TestCase):
                     "min": self.consumption[i][0],
                     "mean": self.consumption[i][1],
                     "median": self.consumption[i][2],
-                    "em": self.em_id,
+                    "energy_meter_id": self.em_id,
                 },
             )
             for i in range(7)
