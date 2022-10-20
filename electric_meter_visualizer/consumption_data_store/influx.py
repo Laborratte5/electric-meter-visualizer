@@ -4,7 +4,7 @@
 from uuid import UUID
 from datetime import datetime
 from datetime import timedelta
-import influxdb_client as influx
+import influxdb_client.client.query_api as influx_query_api
 from electric_meter_visualizer.consumption_data_store import spi
 
 
@@ -13,9 +13,18 @@ class InfluxQuery(spi.Query):
     Representation of a Flux query
     """
 
-    def __init__(self, query_api: influx.QueryApi, bucket: str, query: str):
-        # TODO implement
-        pass
+    def __init__(self, query_api: influx_query_api.QueryApi, bucket: str, query: str):
+        """Create a new Query for an InfluxConsumptionDataStore
+
+        Args:
+            query_api (influxdb_client.client.query_api.QueryApi):
+                Query API that is used to execute this query
+            bucket (str): the identifier for the bucket on which this query is executed
+            query (str): the Flux query string this query should execute
+        """
+        self.query_api: influx_query_api.QueryApi = query_api
+        self.bucket: str = bucket
+        self.query: str = query
 
     def execute(self) -> list[spi.Datapoint]:
         # TODO implement
@@ -30,6 +39,13 @@ class InfluxQueryBuilder(spi.QueryBuilder):
     """
     Helper class to build InfluxQuery objects
     """
+
+    def __init__(self, query_api: influx_query_api.QueryApi, default_bucket: str):
+        self.query_api: influx_query_api.QueryApi = query_api
+        self._buckets: list[str] = [default_bucket]
+        self._source_filters: str = ""
+        self._start_date = None
+        self._stop_date = None
 
     def filter_bucket(self, bucket_list: set[str]) -> spi.QueryBuilder:
         # TODO implement
