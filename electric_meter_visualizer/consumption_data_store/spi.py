@@ -219,6 +219,15 @@ class ConsumptionDataStore(abc.ABC):
         """
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def delete_bucket(self, bucket: str):
+        """Delete a bucket with all datapoints from this ConsumptionDataStore
+
+        Args:
+            bucket (str): the bucket that should be deleted
+        """
+        raise NotImplementedError
+
     def close(self):
         """Close this ConsumptionDataStore
 
