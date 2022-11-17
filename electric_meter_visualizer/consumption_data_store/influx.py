@@ -208,7 +208,7 @@ class InfluxConsumptionDataStore(spi.ConsumptionDataStore):
 
 class InfluxConsumptionDataStoreFactory(
     spi.ConsumptionDataStoreFactory
-):  # pylint: disable=R0903
+):  # pylint: disable=too-few-public-methods
     """
     Helper class to create a concrete object of the InfluxConsumptionDataStore
     """
