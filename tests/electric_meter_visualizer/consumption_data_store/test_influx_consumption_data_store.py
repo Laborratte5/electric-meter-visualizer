@@ -207,7 +207,6 @@ class QueryBuilderTest(unittest.TestCase):
                     |> yield()
             """
 
-        # pylint: disable=assignment-from-no-return
         query = self.query_builder.build(datetime.timedelta(days=1), [])
         self._assert_build(
             query,
@@ -262,7 +261,7 @@ class QueryBuilderTest(unittest.TestCase):
                        |> yield()
             """
 
-        query = self.query_builder.build(  # pylint: disable=assignment-from-no-return
+        query = self.query_builder.build(
             datetime.timedelta(days=1), [AggregateFunction.SUM]
         )
         self._assert_build(
@@ -300,7 +299,7 @@ class QueryBuilderTest(unittest.TestCase):
                 |> yield()
             """
 
-        query = self.query_builder.build(  # pylint: disable=assignment-from-no-return
+        query = self.query_builder.build(
             datetime.timedelta(days=1),
             [AggregateFunction.SUM, AggregateFunction.MEDIAN],
         )
