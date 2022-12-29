@@ -166,10 +166,8 @@ class InfluxQueryBuilder(spi.QueryBuilder):
 
                     # Aggregate data list
                     aggregate_function_data.append(f"{aggregate_function_name}_{i}")
-                # TODO build aggregate functions in python shell testen
 
         # Build union
-        # TODO aggregate function _{i} fehlt
         union = (
             f"""
             union(tables: [{",".join(aggregate_function_data)}])
@@ -184,7 +182,7 @@ class InfluxQueryBuilder(spi.QueryBuilder):
             else "|> yield()"
         )
 
-        logger.info("Union: %s", union)
+        logger.debug("Union: %s", union)
 
         # Build Query
         query: str = f"""
