@@ -5,6 +5,7 @@ from uuid import UUID
 from datetime import datetime
 from datetime import timedelta
 import logging
+from influxdb_client.client import flux_table
 import influxdb_client.client.query_api as influx_query_api
 from electric_meter_visualizer.consumption_data_store import spi
 
@@ -17,6 +18,10 @@ AGGREGATE_MAPPING: dict[spi.AggregateFunction, str] = {
     spi.AggregateFunction.MIN: "min",
     spi.AggregateFunction.MAX: "max",
     spi.AggregateFunction.QUANTILE: "quantile",
+}
+
+REVERSE_AGGREGATE_MAPPING: dict[str, spi.AggregateFunction] = {
+    name: function for function, name in AGGREGATE_MAPPING.items()
 }
 
 
@@ -42,7 +47,30 @@ class InfluxQuery(spi.Query):
         Returns:
             list[spi.Datapoint]: parsed query result
         """
-        # TODO implement
+        result: flux_table.TableList = self.query_api.query(
+            self.query, self.query_parameter
+        )
+        datapoints: list[spi.Datapoint] = []
+
+        for table in result:
+            for record in table.records:
+                datapoint: spi.Datapoint = spi.Datapoint(
+                    record["energy_meter_id"],  # datapoint.source
+                    record["_start"],  # datapoint.start
+                    record["_stop"],  # datapoint.stop
+                    # Each key in record.values that is also a key of REVERSE_AGGREGATE_MAPPING
+                    # is the result of an AggregateFunction.
+                    # For each of these keys create a AggregateFunction->value mapping
+                    {
+                        REVERSE_AGGREGATE_MAPPING[name]: value
+                        for name, value in record.values.items()
+                        if name in REVERSE_AGGREGATE_MAPPING
+                    },  # datapoint.value
+                )
+
+                datapoints.append(datapoint)
+
+        return datapoints
 
     def __hash__(self):
         # TODO implement
