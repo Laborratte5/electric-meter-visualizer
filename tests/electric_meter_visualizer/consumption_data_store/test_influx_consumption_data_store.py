@@ -452,20 +452,19 @@ class QueryTest(unittest.TestCase):
         self.assertEqual(len(result), len(self.consumption))
         for i, datapoint in enumerate(result):
             self.assertEqual(datapoint.source, self.em_id)
-            self.assertEqual(datapoint.bucket, self.bucket_name)
             self.assertIn(datapoint.start, self.dates)
             self.assertIn(datapoint.stop, self.dates)
             self.assertIn(AggregateFunction.MIN, datapoint.value.keys())
             self.assertIn(AggregateFunction.AVERAGE, datapoint.value.keys())
             self.assertIn(AggregateFunction.MEDIAN, datapoint.value.keys())
             self.assertEqual(
-                datapoint.value[AggregateFunction.MIN], datapoint.value[i][0]
+                datapoint.value[AggregateFunction.MIN], self.consumption[i][0]
             )
             self.assertEqual(
-                datapoint.value[AggregateFunction.AVERAGE], datapoint.value[i][1]
+                datapoint.value[AggregateFunction.AVERAGE], self.consumption[i][1]
             )
             self.assertEqual(
-                datapoint.value[AggregateFunction.MEDIAN], datapoint.value[i][2]
+                datapoint.value[AggregateFunction.MEDIAN], self.consumption[i][2]
             )
 
 
