@@ -5,8 +5,10 @@ from uuid import UUID
 from datetime import datetime
 from datetime import timedelta
 import logging
+import influxdb_client
 from influxdb_client.client import flux_table
 import influxdb_client.client.query_api as influx_query_api
+import influxdb_client.client.write_api as influx_write_api
 from electric_meter_visualizer.consumption_data_store import spi
 
 logger = logging.getLogger(__name__)
@@ -215,9 +217,17 @@ class InfluxConsumptionDataStore(spi.ConsumptionDataStore):
     This class implements the ConsumptionDataStore backed by an InfluxDatabase
     """
 
+    def __init__(self, url: str, token: str, organisation: str, default_bucket: str):
+        super().__init__()
+        self.influx_client: influxdb_client.InfluxDBClient = (
+            influxdb_client.InfluxDBClient(url=url, token=token, org=organisation)
+        )
+        self.query_api: influx_query_api.QueryApi = self.influx_client.query_api()
+        self.write_api: influx_write_api.WriteApi = self.influx_client.write_api()
+        self.default_bucket: str = default_bucket
+
     def create_query(self) -> spi.QueryBuilder:
-        # TODO implement
-        pass
+        return InfluxQueryBuilder(self.query_api, self.default_bucket)
 
     def put_data(self, datapoint: spi.Datapoint, bucket: str):
         # TODO implement
@@ -231,6 +241,10 @@ class InfluxConsumptionDataStore(spi.ConsumptionDataStore):
         # TODO implement
         pass
 
+    def close(self):
+        self.write_api.close()
+        self.influx_client.close()
+
 
 class InfluxConsumptionDataStoreFactory(
     spi.ConsumptionDataStoreFactory
@@ -240,4 +254,5 @@ class InfluxConsumptionDataStoreFactory(
     """
 
     def create(self) -> spi.ConsumptionDataStore:
-        return InfluxConsumptionDataStore()
+        # TODO Implement
+        pass
