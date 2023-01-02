@@ -169,7 +169,7 @@ class QueryBuilderTest(unittest.TestCase):
         )
 
     def test_filter_multiple_sources(self):
-        """Test if the source filter sring is correct with multiple sources"""
+        """Test if the source filter string is correct with multiple sources"""
         first_source_id: UUID = uuid.uuid4()
         second_source_id: UUID = uuid.uuid4()
         self.query_builder.filter_source([first_source_id, second_source_id])

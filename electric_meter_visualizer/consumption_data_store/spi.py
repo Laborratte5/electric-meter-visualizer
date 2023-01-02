@@ -142,7 +142,7 @@ class QueryBuilder(abc.ABC):
         raise NotImplementedError
 
 
-class RetentionPolicy(abc.ABC):  # pylint: disable=R0903
+class RetentionPolicy(abc.ABC):  # pylint: disable=too-few-public-methods
     """
     Representation of a retention policy
     which specifies how to handle (older) data points
@@ -258,7 +258,7 @@ class ConsumptionDataStore(abc.ABC):
         """
 
 
-class BaseRetentionPolicy(RetentionPolicy):  # pylint: disable=R0903
+class BaseRetentionPolicy(RetentionPolicy):  # pylint: disable=too-few-public-methods
     """
     Basic RetentionPolicy
 
