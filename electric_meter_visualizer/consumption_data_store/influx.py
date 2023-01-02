@@ -6,7 +6,6 @@ from datetime import datetime
 from datetime import timedelta
 import logging
 import influxdb_client
-from influxdb_client.client import flux_table
 import influxdb_client.client.query_api as influx_query_api
 import influxdb_client.client.write_api as influx_write_api
 from electric_meter_visualizer.consumption_data_store import spi
@@ -49,28 +48,9 @@ class InfluxQuery(spi.Query):
         Returns:
             list[spi.Datapoint]: parsed query result
         """
-        result: flux_table.TableList = self.query_api.query(
-            self.query, self.query_parameter
-        )
         datapoints: list[spi.Datapoint] = []
 
-        for table in result:
-            for record in table.records:
-                datapoint: spi.Datapoint = spi.Datapoint(
-                    record["energy_meter_id"],  # datapoint.source
-                    record["_start"],  # datapoint.start
-                    record["_stop"],  # datapoint.stop
-                    # Each key in record.values that is also a key of REVERSE_AGGREGATE_MAPPING
-                    # is the result of an AggregateFunction.
-                    # For each of these keys create a AggregateFunction->value mapping
-                    {
-                        REVERSE_AGGREGATE_MAPPING[name]: value
-                        for name, value in record.values.items()
-                        if name in REVERSE_AGGREGATE_MAPPING
-                    },  # datapoint.value
-                )
-
-                datapoints.append(datapoint)
+        # TODO auf neuen Datapoint anpassen
 
         return datapoints
 
@@ -89,6 +69,7 @@ class InfluxQueryBuilder(spi.QueryBuilder):
         self._default_bucket: str = default_bucket
         self._buckets: set[str] = {default_bucket}
         self._source_filters: str = ""
+        self._aggregate_function_filters: str = ""
         self._start_date: object = timedelta(days=0)
         self._stop_date: object = datetime.now()
 
@@ -109,6 +90,12 @@ class InfluxQueryBuilder(spi.QueryBuilder):
 
         logger.debug("Query Filter: '%s'", self._source_filters)
         return self
+
+    def filter_aggregate_function(
+        self, aggregate_function_list: set[spi.AggregateFunction]
+    ) -> spi.QueryBuilder:
+        # TODO
+        pass
 
     def filter_start(self, start_date: datetime) -> spi.QueryBuilder:
         self._start_date = start_date

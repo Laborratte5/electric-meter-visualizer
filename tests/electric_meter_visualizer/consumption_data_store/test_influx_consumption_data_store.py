@@ -2,6 +2,8 @@
 Tests for the influx implementation of the
 electric-meter-visualizer.consumption_data_store.spi module
 """
+# pylint: disable=too-many-public-methods
+# pylint: disable=R0801
 import uuid
 from uuid import UUID
 import unittest
@@ -117,6 +119,39 @@ class QueryBuilderTest(unittest.TestCase):
 
         self.assertEqual(
             self.query_builder._buckets, {"test_bucket_1", "test_bucket_2"}
+        )
+
+    def test_filter_no_aggregate_function_list(self):
+        """Test if no aggregate function list defaults to no filter"""
+        self.assertEqual(self.query_builder._aggregate_function_filters, "")
+
+    def test_filter_empty_aggregate_function_list(self):
+        """Test if empty aggregate function list defaults to no filter"""
+        self.query_builder.filter_aggregate_function([])
+
+        self.assertEqual(self.query_builder._aggregate_function_filters, "")
+
+    def test_filter_aggregate_function(self):
+        """Test if aggregate filter contains aggregate function"""
+        self.query_builder.filter_aggregate_function([AggregateFunction.SUM])
+
+        self.assertEqual(
+            self.query_builder._aggregate_function_filters,
+            '|> filter(fn: (r) => r.aggregate_function == "SUM")',
+        )
+
+    def test_filter_multiple_aggregate_functions(self):
+        """Test if the aggregate filter string is correct with multiple aggregate functions"""
+        self.query_builder.filter_aggregate_function(
+            [AggregateFunction.SUM, AggregateFunction.MAX]
+        )
+
+        self.assertEqual(
+            _normalize_text(self.query_builder._aggregate_function_filters),
+            _normalize_text(
+                '|> filter(fn: (r) => r.aggregate_function == "SUM" or \
+                 r.aggregate_function == "MAX")'
+            ),
         )
 
     def test_filter_no_source(self):
