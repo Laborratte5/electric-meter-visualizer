@@ -31,9 +31,17 @@ class Datapoint:
     """
 
     source: UUID
-    start: datetime
-    stop: datetime
-    value: dict[AggregateFunction, float]
+    value: float
+    timestamp: datetime
+    aggregate_function: AggregateFunction
+
+
+@dataclass(init=True, frozen=True)
+class MeasuredDatapoint(Datapoint):
+    """Represents a measured datapoint"""
+
+    def __init__(self, source: UUID, value: float, timestamp: datetime):
+        super().__init__(source, value, timestamp, AggregateFunction.RAW)
 
 
 class Query(abc.ABC):
@@ -66,6 +74,19 @@ class QueryBuilder(abc.ABC):
         Arguments:
             - bucket_list must be a set of string
               Only datapoints from a bucket contained in this list will be returned
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def filter_aggregate_function(
+        self, aggregate_function_list: set[AggregateFunction]
+    ) -> "QueryBuilder":
+        """Filter the consumption data based on the AggregateFunction
+        that was used to created a DataPoint
+
+        Args:
+            aggregate_function_list (set[AggregateFunction]): Only datapoints
+            created by AggregateFunctions contained in this list will be returned
         """
         raise NotImplementedError
 
