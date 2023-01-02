@@ -94,8 +94,18 @@ class InfluxQueryBuilder(spi.QueryBuilder):
     def filter_aggregate_function(
         self, aggregate_function_list: set[spi.AggregateFunction]
     ) -> spi.QueryBuilder:
-        # TODO
-        pass
+        condition: str = " or ".join(
+            f'r.aggregate_function == "{aggregate_function.name}"'
+            for aggregate_function in aggregate_function_list
+        )
+
+        if condition:
+            self._aggregate_function_filters = f"|> filter(fn: (r) => {condition})"
+
+        logger.debug(
+            "Aggregate Function Filter: '%s'", self._aggregate_function_filters
+        )
+        return self
 
     def filter_start(self, start_date: datetime) -> spi.QueryBuilder:
         self._start_date = start_date
@@ -134,6 +144,7 @@ class InfluxQueryBuilder(spi.QueryBuilder):
                     |> range(start: _start_date, stop: _stop_date)
                     |> filter(fn: (r) => r._measurement == "energy_consumption")
                     {self._source_filters}
+                    {self._aggregate_function_filters}
             """
             )
             bucket_names[f"_bucket_{i}"] = bucket
@@ -162,6 +173,7 @@ class InfluxQueryBuilder(spi.QueryBuilder):
             union(tables: [{",".join(aggregate_function_data)}])
             |> pivot(rowKey: ["_start",
                               "_stop",
+                              "aggregate_function",
                               "energy_meter_id"],
                               columnKey: ["_field"],
                               valueColumn: "_value")
