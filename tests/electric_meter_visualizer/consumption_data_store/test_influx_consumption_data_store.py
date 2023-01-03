@@ -326,7 +326,7 @@ class QueryBuilderTest(unittest.TestCase):
                        |> set(key: "_field", value: "median")
 
             union(tables: [sum_0,median_0])
-                |> pivot(rowKey: ["_start", "_stop", "energy_meter_id"], columnKey: ["_field"], valueColumn: "_value")
+                |> pivot(rowKey: ["_time", "_measurement", "aggregate_function"], columnKey: ["_field"], valueColumn: "_value")
                 |> yield()
             """
 
