@@ -397,26 +397,33 @@ class QueryTest(unittest.TestCase):
             ),
             FluxColumn(
                 2,
-                label="_start",
-                data_type="dateTime:RFC3339",
+                label="_measurement",
+                data_type="string",
                 group=False,
                 default_value="",
             ),
             FluxColumn(
                 3,
-                label="_stop",
+                label="_time",
                 data_type="dateTime:RFC3339",
                 group=False,
                 default_value="",
             ),
             FluxColumn(
-                4, label="min", data_type="double", group=False, default_value=""
+                4,
+                label="_aggregate_window",
+                data_type="string",
+                group=False,
+                default_value="",
             ),
             FluxColumn(
-                5, label="mean", data_type="double", group=False, default_value=""
+                5, label="min", data_type="double", group=False, default_value=""
             ),
             FluxColumn(
-                6, label="median", data_type="double", group=False, default_value=""
+                6, label="mean", data_type="double", group=False, default_value=""
+            ),
+            FluxColumn(
+                7, label="median", data_type="double", group=False, default_value=""
             ),
         ]
         # Records
@@ -428,7 +435,6 @@ class QueryTest(unittest.TestCase):
             datetime.datetime(2022, 10, 5, 0, 0, tzinfo=tzutc()),
             datetime.datetime(2022, 10, 6, 0, 0, tzinfo=tzutc()),
             datetime.datetime(2022, 10, 7, 0, 0, tzinfo=tzutc()),
-            datetime.datetime(2022, 10, 8, 0, 0, tzinfo=tzutc()),
         )
         self.consumption = (
             # (min, mean, median)
@@ -447,12 +453,12 @@ class QueryTest(unittest.TestCase):
                 values={
                     "result": "_result",
                     "table": 0,
-                    "_start": self.dates[i],
-                    "_stop": self.dates[i + 1],
+                    "_measurement": str(self.em_id),
+                    "_time": self.dates[i],
+                    "aggregate_function": AggregateFunction.RAW,
                     "min": self.consumption[i][0],
                     "mean": self.consumption[i][1],
                     "median": self.consumption[i][2],
-                    "energy_meter_id": self.em_id,
                 },
             )
             for i in range(7)
@@ -480,23 +486,41 @@ class QueryTest(unittest.TestCase):
         result: list[Datapoint] = query.execute()
 
         self.query_api.query.assert_called()
-        self.assertEqual(len(result), len(self.consumption))
-        for i, datapoint in enumerate(result):
-            self.assertEqual(datapoint.source, self.em_id)
-            self.assertIn(datapoint.start, self.dates)
-            self.assertIn(datapoint.stop, self.dates)
-            self.assertIn(AggregateFunction.MIN, datapoint.value.keys())
-            self.assertIn(AggregateFunction.AVERAGE, datapoint.value.keys())
-            self.assertIn(AggregateFunction.MEDIAN, datapoint.value.keys())
-            self.assertEqual(
-                datapoint.value[AggregateFunction.MIN], self.consumption[i][0]
-            )
-            self.assertEqual(
-                datapoint.value[AggregateFunction.AVERAGE], self.consumption[i][1]
-            )
-            self.assertEqual(
-                datapoint.value[AggregateFunction.MEDIAN], self.consumption[i][2]
-            )
+
+        # Result contains extra datapoint for each AggregateFunction => 3x
+        self.assertEqual(len(result), 3 * len(self.consumption))
+
+        # Filter result datapoints based on their AggregateFunction
+        aggregate_min_results: list[Datapoint] = [
+            datapoint
+            for datapoint in result
+            if datapoint.aggregate_function == AggregateFunction.MIN
+        ]
+        aggregate_avg_results: list[Datapoint] = [
+            datapoint
+            for datapoint in result
+            if datapoint.aggregate_function == AggregateFunction.AVERAGE
+        ]
+        aggregate_med_results: list[Datapoint] = [
+            datapoint
+            for datapoint in result
+            if datapoint.aggregate_function == AggregateFunction.MEDIAN
+        ]
+
+        # This tests if the AggregateFunctions are set correctly
+        self.assertEqual(len(aggregate_min_results), len(self.consumption))
+        self.assertEqual(len(aggregate_avg_results), len(self.consumption))
+        self.assertEqual(len(aggregate_med_results), len(self.consumption))
+
+        # Test if value, source and timestamp is set correctly
+        for i, grouped_result in enumerate(
+            (aggregate_min_results, aggregate_avg_results, aggregate_med_results)
+        ):
+            for j, datapoint in enumerate(grouped_result):
+                with self.subTest(datapoint=datapoint):
+                    self.assertEqual(datapoint.value, self.consumption[j][i])
+                    self.assertEqual(datapoint.source, self.em_id)
+                    self.assertEqual(datapoint.timestamp, self.dates[j])
 
 
 if __name__ == "__main__":
