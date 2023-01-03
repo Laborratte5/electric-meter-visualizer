@@ -6,6 +6,7 @@ from datetime import datetime
 from datetime import timedelta
 import logging
 import influxdb_client
+from influxdb_client.client import flux_table
 import influxdb_client.client.query_api as influx_query_api
 import influxdb_client.client.write_api as influx_write_api
 from electric_meter_visualizer.consumption_data_store import spi
@@ -50,7 +51,28 @@ class InfluxQuery(spi.Query):
         """
         datapoints: list[spi.Datapoint] = []
 
-        # TODO auf neuen Datapoint anpassen
+        result: flux_table.TableList = self.query_api.query(
+            self.query, self.query_parameter
+        )
+
+        for table in result:
+            for record in table.records:
+                source: UUID = UUID(record["_measurement"])
+                timestamp: datetime = record["_time"]
+
+                for (
+                    aggregate_function,
+                    aggregate_function_name,
+                ) in AGGREGATE_MAPPING.items():
+                    if aggregate_function_name in record.values.keys():
+                        datapoint: spi.Datapoint = spi.Datapoint(
+                            source,
+                            record[aggregate_function_name],
+                            timestamp,
+                            aggregate_function,
+                        )
+
+                        datapoints.append(datapoint)
 
         return datapoints
 
