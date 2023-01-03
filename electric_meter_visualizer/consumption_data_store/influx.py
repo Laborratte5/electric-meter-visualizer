@@ -170,8 +170,7 @@ class InfluxQueryBuilder(spi.QueryBuilder):
         union = (
             f"""
             union(tables: [{",".join(aggregate_function_data)}])
-            |> pivot(rowKey: ["_start",
-                              "_stop",
+            |> pivot(rowKey: ["_time",
                               "_measurement",
                               "aggregate_function"],
                               columnKey: ["_field"],
