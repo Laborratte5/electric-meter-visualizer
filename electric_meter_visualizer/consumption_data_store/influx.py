@@ -82,7 +82,7 @@ class InfluxQueryBuilder(spi.QueryBuilder):
 
     def filter_source(self, id_list: set[UUID]) -> spi.QueryBuilder:
         condition: str = " or ".join(
-            f'r.energy_meter_id == "{meter_id}"' for meter_id in id_list
+            f'r._measurement == "{meter_id}"' for meter_id in id_list
         )
 
         if condition:
@@ -142,7 +142,6 @@ class InfluxQueryBuilder(spi.QueryBuilder):
                 + f"""
                 data_{i} = from(bucket: _bucket_{i})
                     |> range(start: _start_date, stop: _stop_date)
-                    |> filter(fn: (r) => r._measurement == "energy_consumption")
                     {self._source_filters}
                     {self._aggregate_function_filters}
             """
@@ -173,8 +172,8 @@ class InfluxQueryBuilder(spi.QueryBuilder):
             union(tables: [{",".join(aggregate_function_data)}])
             |> pivot(rowKey: ["_start",
                               "_stop",
-                              "aggregate_function",
-                              "energy_meter_id"],
+                              "_measurement",
+                              "aggregate_function"],
                               columnKey: ["_field"],
                               valueColumn: "_value")
             |> yield()
