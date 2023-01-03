@@ -165,7 +165,7 @@ class QueryBuilderTest(unittest.TestCase):
 
         self.assertEqual(
             self.query_builder._source_filters,
-            f'|> filter(fn: (r) => r.energy_meter_id == "{source_id}")',
+            f'|> filter(fn: (r) => r._measurement == "{source_id}")',
         )
 
     def test_filter_multiple_sources(self):
@@ -177,8 +177,8 @@ class QueryBuilderTest(unittest.TestCase):
         self.assertEqual(
             _normalize_text(self.query_builder._source_filters),
             _normalize_text(
-                f'|> filter(fn: (r) => r.energy_meter_id == "{first_source_id}" or\
-                 r.energy_meter_id == "{second_source_id}")'
+                f'|> filter(fn: (r) => r._measurement == "{first_source_id}" or\
+                 r._measurement == "{second_source_id}")'
             ),
         )
 
@@ -238,7 +238,6 @@ class QueryBuilderTest(unittest.TestCase):
 
             data_0 = from(bucket: _bucket_0)
                     |> range(start: _start_date, stop: _stop_date)
-                    |> filter(fn: (r) => r._measurement == "energy_consumption")
                     |> yield()
             """
 
@@ -262,7 +261,6 @@ class QueryBuilderTest(unittest.TestCase):
 
             data_0 = from(bucket: _bucket_0)
                     |> range(start: _start_date, stop: _stop_date)
-                    |> filter(fn: (r) => r._measurement == "energy_consumption")
                     |> yield()
             """
 
@@ -288,7 +286,6 @@ class QueryBuilderTest(unittest.TestCase):
 
             data_0 = from(bucket: _bucket_0)
                     |> range(start: _start_date, stop: _stop_date)
-                    |> filter(fn: (r) => r._measurement == "energy_consumption")
 
             sum_0 = data_0 |> {CUSTOM_AGGREGATE_NAME}(every: _aggregate_window, fn: sum)
                        |> map(fn: (r) => ({{r with _value: float(v: r._value)}}))
@@ -319,7 +316,6 @@ class QueryBuilderTest(unittest.TestCase):
 
             data_0 = from(bucket: _bucket_0)
                     |> range(start: _start_date, stop: _stop_date)
-                    |> filter(fn: (r) => r._measurement == "energy_consumption")
 
             sum_0 = data_0 |> {CUSTOM_AGGREGATE_NAME}(every: _aggregate_window, fn: sum)
                        |> map(fn: (r) => ({{r with _value: float(v: r._value)}}))
