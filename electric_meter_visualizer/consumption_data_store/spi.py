@@ -2,10 +2,12 @@
 This module represents a storage containing consumption data time series
 """
 import abc
-from dataclasses import dataclass
+from dataclasses import field, dataclass
 import enum
 from datetime import datetime, timedelta
 from uuid import UUID
+
+from optional import Optional
 
 
 class AggregateFunction(enum.Enum):
@@ -158,6 +160,43 @@ class RetentionPolicy(abc.ABC):  # pylint: disable=too-few-public-methods
         raise NotImplementedError
 
 
+@dataclass
+class DeleteRequest:
+    """Class encapsulating mandatory and optional parameters used when
+    deleting Datapoints from a ConsumptionDataStore
+    """
+
+    bucket: str
+    start_date: datetime
+    stop_date: datetime
+    _source: Optional = field(init=False, default=Optional.empty())
+    _aggregate_function: Optional = field(init=False, default=Optional.empty())
+
+    @property
+    def source(self):
+        """Optional containing the source to which the DeleteRequest is limited"""
+        return self._source
+
+    @source.setter
+    def source(self, source: UUID):
+        if source:
+            self._source = Optional.of(source)
+        else:
+            self._source = Optional.empty()
+
+    @property
+    def aggregate_function(self):
+        """Optional containing the AggregateFunction to which the DeleteRequest is limited"""
+        return self._aggregate_function
+
+    @aggregate_function.setter
+    def aggregate_function(self, aggregate_function: AggregateFunction):
+        if aggregate_function:
+            self._aggregate_function = Optional.of(aggregate_function)
+        else:
+            self._source = Optional.empty()
+
+
 class ConsumptionDataStore(abc.ABC):
     """
     This class is used to abstract the interaction with a ConsumptionDataStore
@@ -228,15 +267,11 @@ class ConsumptionDataStore(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def delete_data(self, datapoint: Datapoint, bucket: str):
-        """
-        Delete a Datapoint from this ConsumptionDataStore
+    def delete_data(self, request: DeleteRequest):
+        """Delete data from this ConsumptionDataStore
 
-        Arguments:
-            - datapoint must be a Datapoint
-              The Datapoint that should be deleted from this ConsumptionDataStore
-            - bucket must be a string
-              The name of the bucket the data should be deleted from
+        Args:
+            request (DeleteRequest): Description of which data should be deleted
         """
         raise NotImplementedError
 

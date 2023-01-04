@@ -252,7 +252,7 @@ class InfluxConsumptionDataStore(spi.ConsumptionDataStore):
         # TODO implement
         pass
 
-    def delete_data(self, datapoint: spi.Datapoint, bucket: str):
+    def delete_data(self, request: spi.DeleteRequest):
         # TODO implement
         pass
 
