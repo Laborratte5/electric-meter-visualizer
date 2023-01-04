@@ -7,6 +7,7 @@ electric-meter-visualizer.consumption_data_store.spi module
 import uuid
 from uuid import UUID
 import unittest
+import unittest.mock
 from unittest.mock import Mock, patch
 import datetime
 from dateutil.tz import tzutc
@@ -22,7 +23,6 @@ from electric_meter_visualizer.consumption_data_store.spi import (
     ConsumptionDataStore,
     Datapoint,
     Query,
-    QueryBuilder,
 )
 from electric_meter_visualizer.consumption_data_store import influx
 
@@ -92,7 +92,7 @@ class QueryBuilderTest(unittest.TestCase):
             wraps=datetime.datetime,
         ) as mock_date:
             mock_date.now = Mock(return_value=self.now)
-            self.query_builder: QueryBuilder = influx.InfluxQueryBuilder(
+            self.query_builder: influx.InfluxQueryBuilder = influx.InfluxQueryBuilder(
                 self.query_api,
                 self.default_bucket,
             )
@@ -103,7 +103,7 @@ class QueryBuilderTest(unittest.TestCase):
 
     def test_filter_empty_bucket_list(self):
         """Test if an empty bucket filter list defaults to the default bucket"""
-        self.query_builder.filter_bucket([])
+        self.query_builder.filter_bucket(set())
 
         self.assertEqual(self.query_builder._buckets, {self.default_bucket})
 
@@ -127,13 +127,13 @@ class QueryBuilderTest(unittest.TestCase):
 
     def test_filter_empty_aggregate_function_list(self):
         """Test if empty aggregate function list defaults to no filter"""
-        self.query_builder.filter_aggregate_function([])
+        self.query_builder.filter_aggregate_function(set())
 
         self.assertEqual(self.query_builder._aggregate_function_filters, "")
 
     def test_filter_aggregate_function(self):
         """Test if aggregate filter contains aggregate function"""
-        self.query_builder.filter_aggregate_function([AggregateFunction.SUM])
+        self.query_builder.filter_aggregate_function({AggregateFunction.SUM})
 
         self.assertEqual(
             self.query_builder._aggregate_function_filters,
@@ -143,15 +143,25 @@ class QueryBuilderTest(unittest.TestCase):
     def test_filter_multiple_aggregate_functions(self):
         """Test if the aggregate filter string is correct with multiple aggregate functions"""
         self.query_builder.filter_aggregate_function(
-            [AggregateFunction.SUM, AggregateFunction.MAX]
+            {AggregateFunction.SUM, AggregateFunction.MAX}
         )
 
-        self.assertEqual(
-            _normalize_text(self.query_builder._aggregate_function_filters),
-            _normalize_text(
+        filter_string: str = _normalize_text(
+            self.query_builder._aggregate_function_filters
+        )
+
+        # set is unordered so both filters could be constructed
+        self.assertTrue(
+            filter_string
+            == _normalize_text(
                 '|> filter(fn: (r) => r.aggregate_function == "SUM" or \
                  r.aggregate_function == "MAX")'
-            ),
+            )
+            or filter_string
+            == _normalize_text(
+                '|> filter(fn: (r) => r.aggregate_function == "MAX" or \
+                 r.aggregate_function == "SUM")'
+            )
         )
 
     def test_filter_no_source(self):
@@ -172,14 +182,22 @@ class QueryBuilderTest(unittest.TestCase):
         """Test if the source filter string is correct with multiple sources"""
         first_source_id: UUID = uuid.uuid4()
         second_source_id: UUID = uuid.uuid4()
-        self.query_builder.filter_source([first_source_id, second_source_id])
+        self.query_builder.filter_source({first_source_id, second_source_id})
 
-        self.assertEqual(
-            _normalize_text(self.query_builder._source_filters),
-            _normalize_text(
+        filter_string: str = _normalize_text(self.query_builder._source_filters)
+
+        # set is unordered so both filters could be constructed
+        self.assertTrue(
+            filter_string
+            == _normalize_text(
                 f'|> filter(fn: (r) => r._measurement == "{first_source_id}" or\
                  r._measurement == "{second_source_id}")'
-            ),
+            )
+            or filter_string
+            == _normalize_text(
+                f'|> filter(fn: (r) => r._measurement == "{second_source_id}" or\
+                 r._measurement == "{first_source_id}")'
+            )
         )
 
     def test_filter_no_start(self):
@@ -241,11 +259,11 @@ class QueryBuilderTest(unittest.TestCase):
                     |> yield()
             """
 
-        query = self.query_builder.build(datetime.timedelta(days=1), [])
+        query = self.query_builder.build(datetime.timedelta(days=1), set())
         self._assert_build(
             query,
             query_mock,
-            expected_query,
+            [expected_query],
             {
                 "_bucket_0": self.default_bucket,
                 "_start_date": datetime.timedelta(days=0),
@@ -265,12 +283,12 @@ class QueryBuilderTest(unittest.TestCase):
             """
 
         query: Query = self.query_builder.build(
-            datetime.timedelta(days=1), [AggregateFunction.RAW]
+            datetime.timedelta(days=1), {AggregateFunction.RAW}
         )
         self._assert_build(
             query,
             query_mock,
-            expected_query,
+            [expected_query],
             {
                 "_bucket_0": self.default_bucket,
                 "_start_date": datetime.timedelta(days=0),
@@ -294,12 +312,12 @@ class QueryBuilderTest(unittest.TestCase):
             """
 
         query = self.query_builder.build(
-            datetime.timedelta(days=1), [AggregateFunction.SUM]
+            datetime.timedelta(days=1), {AggregateFunction.SUM}
         )
         self._assert_build(
             query,
             query_mock,
-            expected_query,
+            [expected_query],
             {
                 "_bucket_0": self.default_bucket,
                 "_start_date": datetime.timedelta(days=0),
@@ -311,7 +329,7 @@ class QueryBuilderTest(unittest.TestCase):
     @patch("electric_meter_visualizer.consumption_data_store.influx.InfluxQuery")
     def test_build_multiple_aggregate_functions(self, query_mock):
         """Test if Query for `AggregateFunction.SUM` and `AggregateFunction.MAX` is correct"""
-        expected_query: str = f"""
+        expected_query_1: str = f"""
             {CUSTOM_AGGREGATE_FUNCTION_TEXT}
 
             data_0 = from(bucket: _bucket_0)
@@ -330,14 +348,33 @@ class QueryBuilderTest(unittest.TestCase):
                 |> yield()
             """
 
+        expected_query_2: str = f"""
+            {CUSTOM_AGGREGATE_FUNCTION_TEXT}
+
+            data_0 = from(bucket: _bucket_0)
+                    |> range(start: _start_date, stop: _stop_date)
+
+            median_0 = data_0 |> {CUSTOM_AGGREGATE_NAME}(every: _aggregate_window, fn: median)
+                       |> map(fn: (r) => ({{r with _value: float(v: r._value)}}))
+                       |> set(key: "_field", value: "median")
+
+            sum_0 = data_0 |> {CUSTOM_AGGREGATE_NAME}(every: _aggregate_window, fn: sum)
+                       |> map(fn: (r) => ({{r with _value: float(v: r._value)}}))
+                       |> set(key: "_field", value: "sum")
+
+            union(tables: [median_0,sum_0])
+                |> pivot(rowKey: ["_time", "_measurement", "aggregate_function"], columnKey: ["_field"], valueColumn: "_value")
+                |> yield()
+            """
+
         query = self.query_builder.build(
             datetime.timedelta(days=1),
-            [AggregateFunction.SUM, AggregateFunction.MEDIAN],
+            {AggregateFunction.SUM, AggregateFunction.MEDIAN},
         )
         self._assert_build(
             query,
             query_mock,
-            expected_query,
+            [expected_query_1, expected_query_2],
             {
                 "_bucket_0": self.default_bucket,
                 "_start_date": datetime.timedelta(days=0),
@@ -350,7 +387,7 @@ class QueryBuilderTest(unittest.TestCase):
         self,
         query: Query,
         query_mock,
-        expected_query: str,
+        possible_queries: list[str],
         query_params: dict[str, object],
     ):
         """Assert if `QueryBuilder.build` function works correct
@@ -360,7 +397,7 @@ class QueryBuilderTest(unittest.TestCase):
             query_mock (Mock): The InfluxQuery Mock object
             expected_query (str): The expected query string from the `QueryBuilder.build` `Query`
         """
-        expected_query = _normalize_text(expected_query)
+        allowed_queries: list[str] = list(map(_normalize_text, possible_queries))
 
         query_mock.assert_called_once()
         self.assertEqual(
@@ -371,7 +408,7 @@ class QueryBuilderTest(unittest.TestCase):
         normalized_query_argument = _normalize_text(
             query_mock.call_args[0][1]
         )  # query string
-        self.assertEqual(normalized_query_argument, expected_query)
+        self.assertIn(normalized_query_argument, allowed_queries)
         self.assertEqual(query_mock.call_args[0][2], query_params)  # query parameter
         self.assertIsNotNone(query)
 
