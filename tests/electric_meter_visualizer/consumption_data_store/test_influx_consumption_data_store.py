@@ -85,6 +85,7 @@ class QueryBuilderTest(unittest.TestCase):
     def setUp(self) -> None:
         self.query_api: QueryApi = Mock()
         self.default_bucket: str = "default_test_bucket"
+        self.organisation: str = "test_organisation"
 
         self.now = datetime.datetime(2022, 10, 20)
         with unittest.mock.patch(
@@ -410,6 +411,7 @@ class QueryBuilderTest(unittest.TestCase):
         )  # query string
         self.assertIn(normalized_query_argument, allowed_queries)
         self.assertEqual(query_mock.call_args[0][2], query_params)  # query parameter
+        self.assertEqual(query_mock.call_args[0][3], self.organisation)  # organisation
         self.assertIsNotNone(query)
 
 
@@ -515,6 +517,10 @@ class QueryTest(unittest.TestCase):
         Test if the Query correctly parses the output of the influx database
         to a list of Datapoints
         """
+        query_string = "query string that is irrelevant for this test"
+        organisation = "test_organisation"
+        query_parameter = {}
+
         query: Query = influx.InfluxQuery(
             self.query_api,
             "query string that is irrelevant for this test",
@@ -522,7 +528,9 @@ class QueryTest(unittest.TestCase):
         )
         result: list[Datapoint] = query.execute()
 
-        self.query_api.query.assert_called()
+        self.query_api.query.assert_called_once_with(
+            query_string, organisation, query_parameter
+        )
 
         # Result contains extra datapoint for each AggregateFunction => 3x
         self.assertEqual(len(result), 3 * len(self.consumption))
