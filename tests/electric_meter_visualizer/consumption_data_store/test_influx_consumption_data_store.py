@@ -11,7 +11,7 @@ import unittest.mock
 from unittest.mock import Mock, patch
 import datetime
 from dateutil.tz import tzutc
-from influxdb_client import QueryApi
+from influxdb_client import Point, QueryApi
 from influxdb_client.client.flux_table import (
     FluxColumn,
     FluxTable,
@@ -22,7 +22,10 @@ from electric_meter_visualizer.consumption_data_store.spi import (
     ConsumptionDataStoreFactory,
     ConsumptionDataStore,
     Datapoint,
+    DeleteRequest,
+    MeasuredDatapoint,
     Query,
+    QueryBuilder,
 )
 from electric_meter_visualizer.consumption_data_store import influx
 
@@ -568,6 +571,145 @@ class QueryTest(unittest.TestCase):
                     self.assertEqual(datapoint.value, self.consumption[j][i])
                     self.assertEqual(datapoint.source, self.em_id)
                     self.assertEqual(datapoint.timestamp, self.dates[j])
+
+
+class ConsumptionDataStoreTest(unittest.TestCase):
+    """Test the influx ConsumptionDataStore implementation"""
+
+    # pylint: disable=protected-access
+
+    def setUp(self) -> None:
+        self.organisation = "test_organisation"
+        self.consumption_data_store: ConsumptionDataStore = (
+            influx.InfluxConsumptionDataStore("", "", self.organisation, "")
+        )
+
+    def test_execute_retention_policy(self):
+        """Test if the ConsumptionDataStore executes added RetentionPolicies"""
+        retention_policy = Mock()
+        self.consumption_data_store.add_retention_policy(retention_policy)
+
+        retention_policy.execute.assert_not_called()
+        self.consumption_data_store.execute_retention_policy()
+        retention_policy.execute.assert_called_once()
+
+    def test_create_query(self):
+        """Test if the ConsumptionDataStore returns a QueryBuilder"""
+        query_builder: QueryBuilder = self.consumption_data_store.create_query()
+        self.assertIsNotNone(query_builder)
+
+    @patch("influxdb_client.client.write_api.WriteApi.write")
+    def test_put_data(self, write_api):
+        """Test if the given Datapoint is properly convertet into a influx_client.Point
+        and the data is written to the database
+        """
+        source = uuid.uuid4()
+        timestamp = datetime.datetime.now()
+        value = 42
+        data_point: Datapoint = MeasuredDatapoint(source, value, timestamp)
+        bucket = "test_bucket"
+
+        self.consumption_data_store.put_data(data_point, bucket)
+
+        # Assert if write was called and Point was constructed the correct way
+        write_api.assert_called_once()
+        self.assertEqual(write_api.call_args.args[0], bucket)
+        self.assertEqual(write_api.call_args.args[1], self.organisation)
+        # Assert written datapoint
+        point = write_api.call_args.args[2]
+
+        expected_point = (
+            Point(source)
+            .time(timestamp)
+            .field("consumption", value)
+            .tag("aggregate_function", AggregateFunction.RAW.name)
+        )
+        self.assertEqual(point._name, expected_point._name)
+        self.assertEqual(point._time, expected_point._time)
+        self.assertEqual(point._fields, expected_point._fields)
+        self.assertEqual(point._tags, expected_point._tags)
+
+    @patch("influxdb_client.DeleteApi.delete")
+    def test_delete_data(self, delete_api):
+        """Test data deletion without filters"""
+        bucket = "test_bucket"
+        start_date = datetime.datetime(2022, 1, 1)
+        stop_date = datetime.datetime(2022, 6, 1)
+
+        delete_request: DeleteRequest = DeleteRequest(bucket, start_date, stop_date)
+        self.consumption_data_store.delete_data(delete_request)
+
+        # Assert
+        delete_api.assert_called_once_with(
+            start_date, stop_date, "", bucket, self.organisation
+        )
+
+    @patch("influxdb_client.DeleteApi.delete")
+    def test_delete_data_source(self, delete_api):
+        """Test data deletion with source filter"""
+        bucket = "test_bucket"
+        start_date = datetime.datetime(2022, 1, 1)
+        stop_date = datetime.datetime(2022, 6, 1)
+        source = uuid.uuid4()
+
+        delete_request: DeleteRequest = DeleteRequest(bucket, start_date, stop_date)
+        delete_request.source = source
+
+        self.consumption_data_store.delete_data(delete_request)
+
+        # Assert
+        delete_api.assert_called_once_with(
+            start_date, stop_date, f'_measurement="{source}"', bucket, self.organisation
+        )
+
+    @patch("influxdb_client.DeleteApi.delete")
+    def test_delete_data_aggregate_function(self, delete_api):
+        """Test data deletion with aggregate_function filter"""
+        bucket = "test_bucket"
+        start_date = datetime.datetime(2022, 1, 1)
+        stop_date = datetime.datetime(2022, 6, 1)
+        aggregate_function = AggregateFunction.AVERAGE
+
+        delete_request: DeleteRequest = DeleteRequest(bucket, start_date, stop_date)
+        delete_request.aggregate_function = aggregate_function
+        self.consumption_data_store.delete_data(delete_request)
+
+        # Assert
+        delete_api.assert_called_once_with(
+            start_date,
+            stop_date,
+            f'aggregate_function="{aggregate_function.name}"',
+            bucket,
+            self.organisation,
+        )
+
+    @patch("influxdb_client.DeleteApi.delete")
+    def test_delete_data_source_aggregate_function(self, delete_api):
+        """Test data deletion with source filter and aggregate_function filter"""
+        bucket = "test_bucket"
+        start_date = datetime.datetime(2022, 1, 1)
+        stop_date = datetime.datetime(2022, 6, 1)
+        source = uuid.uuid4()
+        aggregate_function = AggregateFunction.RAW
+
+        delete_request: DeleteRequest = DeleteRequest(bucket, start_date, stop_date)
+        delete_request.source = source
+        delete_request.aggregate_function = aggregate_function
+        self.consumption_data_store.delete_data(delete_request)
+
+        # Assert
+        delete_api.assert_called_once()
+        self.assertEqual(delete_api.call_args.args[0], start_date)
+        self.assertEqual(delete_api.call_args.args[1], stop_date)
+        self.assertIn(
+            delete_api.call_args.args[2],
+            [
+                f'aggregate_function="{aggregate_function.name}" AND _measurement="{source}"',
+                f'_measurement="{source}" AND aggregate_function="{aggregate_function.name}"',
+            ],
+        )
+        self.assertEqual(delete_api.call_args.args[3], bucket)
+        self.assertEqual(delete_api.call_args.args[4], self.organisation)
 
 
 if __name__ == "__main__":
