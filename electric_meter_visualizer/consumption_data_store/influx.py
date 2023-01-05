@@ -272,8 +272,25 @@ class InfluxConsumptionDataStore(spi.ConsumptionDataStore):
         self.write_api.write(bucket, self.organisation, point)
 
     def delete_data(self, request: spi.DeleteRequest):
-        # TODO implement
-        pass
+        delete_api: influxdb_client.DeleteApi = self.influx_client.delete_api()
+        predicate: str = ""
+
+        if request.source.is_present():
+            predicate += f'_measurement="{request.source.get()}"'
+
+        if request.source.is_present() and request.aggregate_function.is_present():
+            predicate += " AND "
+
+        if request.aggregate_function.is_present():
+            predicate += f'aggregate_function="{request.aggregate_function.get().name}"'
+
+        delete_api.delete(
+            request.start_date,
+            request.stop_date,
+            predicate,
+            request.bucket,
+            self.organisation,
+        )
 
     def delete_bucket(self, bucket: str):
         # TODO implement
