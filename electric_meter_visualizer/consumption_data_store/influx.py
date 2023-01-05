@@ -37,11 +37,13 @@ class InfluxQuery(spi.Query):
         query_api: influx_query_api.QueryApi,
         query: str,
         query_parameter: dict[str, object],
+        organisation: str,
     ):
         """Create a new Query for an InfluxConsumptionDataStore"""
         self.query_api: influx_query_api.QueryApi = query_api
         self.query: str = query
         self.query_parameter: dict[str, object] = query_parameter
+        self.organisation: str = organisation
 
     def execute(self) -> list[spi.Datapoint]:
         """Execute this query
@@ -52,7 +54,7 @@ class InfluxQuery(spi.Query):
         datapoints: list[spi.Datapoint] = []
 
         result: flux_table.TableList = self.query_api.query(
-            self.query, self.query_parameter
+            self.query, self.organisation, self.query_parameter
         )
 
         for table in result:
@@ -86,7 +88,14 @@ class InfluxQueryBuilder(spi.QueryBuilder):
     Helper class to build InfluxQuery objects
     """
 
-    def __init__(self, query_api: influx_query_api.QueryApi, default_bucket: str):
+    # pylint: disable=too-many-instance-attributes
+
+    def __init__(
+        self,
+        query_api: influx_query_api.QueryApi,
+        organisation: str,
+        default_bucket: str,
+    ):
         self.query_api: influx_query_api.QueryApi = query_api
         self._default_bucket: str = default_bucket
         self._buckets: set[str] = {default_bucket}
@@ -94,6 +103,7 @@ class InfluxQueryBuilder(spi.QueryBuilder):
         self._aggregate_function_filters: str = ""
         self._start_date: object = timedelta(days=0)
         self._stop_date: object = datetime.now()
+        self.organisation: str = organisation
 
     def filter_bucket(self, bucket_list: set[str]) -> spi.QueryBuilder:
         self._buckets = bucket_list
@@ -228,7 +238,7 @@ class InfluxQueryBuilder(spi.QueryBuilder):
         if spi.AggregateFunction.RAW not in aggregate_functions:
             query_parameters["_aggregate_window"] = aggregate_window
 
-        return InfluxQuery(self.query_api, query, query_parameters)
+        return InfluxQuery(self.query_api, query, query_parameters, self.organisation)
 
 
 class InfluxConsumptionDataStore(spi.ConsumptionDataStore):
@@ -243,10 +253,13 @@ class InfluxConsumptionDataStore(spi.ConsumptionDataStore):
         )
         self.query_api: influx_query_api.QueryApi = self.influx_client.query_api()
         self.write_api: influx_write_api.WriteApi = self.influx_client.write_api()
+        self.organisation = organisation
         self.default_bucket: str = default_bucket
 
     def create_query(self) -> spi.QueryBuilder:
-        return InfluxQueryBuilder(self.query_api, self.default_bucket)
+        return InfluxQueryBuilder(
+            self.query_api, self.organisation, self.default_bucket
+        )
 
     def put_data(self, datapoint: spi.Datapoint, bucket: str):
         # TODO implement

@@ -95,6 +95,7 @@ class QueryBuilderTest(unittest.TestCase):
             mock_date.now = Mock(return_value=self.now)
             self.query_builder: influx.InfluxQueryBuilder = influx.InfluxQueryBuilder(
                 self.query_api,
+                self.organisation,
                 self.default_bucket,
             )
 
@@ -523,8 +524,9 @@ class QueryTest(unittest.TestCase):
 
         query: Query = influx.InfluxQuery(
             self.query_api,
-            "query string that is irrelevant for this test",
-            {},
+            query_string,
+            query_parameter,
+            organisation,
         )
         result: list[Datapoint] = query.execute()
 
