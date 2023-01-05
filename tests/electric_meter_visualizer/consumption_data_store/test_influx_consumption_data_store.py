@@ -261,7 +261,16 @@ class QueryBuilderTest(unittest.TestCase):
 
             data_0 = from(bucket: _bucket_0)
                     |> range(start: _start_date, stop: _stop_date)
-                    |> yield()
+
+            raw_0 = data_0
+                    |> map(fn: (r) => ({{r with _value: float(v: r._value)}})) |> set(key: "_field", value: "raw")
+
+            |> pivot(rowKey: ["_time",
+                                "_measurement",
+                                "aggregate_function"],
+                                columnKey: ["_field"],
+                                valueColumn: "_value")
+            |> yield()
             """
 
         query = self.query_builder.build(datetime.timedelta(days=1), set())
@@ -284,6 +293,15 @@ class QueryBuilderTest(unittest.TestCase):
 
             data_0 = from(bucket: _bucket_0)
                     |> range(start: _start_date, stop: _stop_date)
+
+            raw_0 = data_0
+                    |> map(fn: (r) => ({{r with _value: float(v: r._value)}})) |> set(key: "_field", value: "raw")
+
+                    |> pivot(rowKey: ["_time",
+                                        "_measurement",
+                                        "aggregate_function"],
+                                        columnKey: ["_field"],
+                                        valueColumn: "_value")
                     |> yield()
             """
 
@@ -313,6 +331,11 @@ class QueryBuilderTest(unittest.TestCase):
             sum_0 = data_0 |> {CUSTOM_AGGREGATE_NAME}(every: _aggregate_window, fn: sum)
                        |> map(fn: (r) => ({{r with _value: float(v: r._value)}}))
                        |> set(key: "_field", value: "sum")
+                       |> pivot(rowKey: ["_time",
+                                         "_measurement",
+                                         "aggregate_function"],
+                                         columnKey: ["_field"],
+                                         valueColumn: "_value")
                        |> yield()
             """
 
