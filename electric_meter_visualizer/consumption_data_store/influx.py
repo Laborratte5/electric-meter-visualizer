@@ -262,8 +262,14 @@ class InfluxConsumptionDataStore(spi.ConsumptionDataStore):
         )
 
     def put_data(self, datapoint: spi.Datapoint, bucket: str):
-        # TODO implement
-        pass
+        point: influxdb_client.Point = (
+            influxdb_client.Point(datapoint.source)
+            .field("consumption", datapoint.value)
+            .tag("aggregate_function", datapoint.aggregate_function.name)
+            .time(datapoint.timestamp)
+        )
+
+        self.write_api.write(bucket, self.organisation, point)
 
     def delete_data(self, request: spi.DeleteRequest):
         # TODO implement
