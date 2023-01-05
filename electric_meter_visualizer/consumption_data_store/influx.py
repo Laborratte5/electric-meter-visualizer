@@ -20,6 +20,7 @@ AGGREGATE_MAPPING: dict[spi.AggregateFunction, str] = {
     spi.AggregateFunction.MIN: "min",
     spi.AggregateFunction.MAX: "max",
     spi.AggregateFunction.QUANTILE: "quantile",
+    spi.AggregateFunction.RAW: "raw",
 }
 
 REVERSE_AGGREGATE_MAPPING: dict[str, spi.AggregateFunction] = {
@@ -197,20 +198,22 @@ class InfluxQueryBuilder(spi.QueryBuilder):
 
                     # Aggregate data list
                     aggregate_function_data.append(f"{aggregate_function_name}_{i}")
+            else:
+                aggregate_query = (
+                    aggregate_query
+                    + f"""
+                        {AGGREGATE_MAPPING[spi.AggregateFunction.RAW]}_{i} = data_{i}
+                            |> map(fn: (r) => ({{r with _value: float(v: r._value)}})) |> set(key: "_field", value: "{AGGREGATE_MAPPING[spi.AggregateFunction.RAW]}")
+                    """
+                )
 
         # Build union
         union = (
             f"""
             union(tables: [{",".join(aggregate_function_data)}])
-            |> pivot(rowKey: ["_time",
-                              "_measurement",
-                              "aggregate_function"],
-                              columnKey: ["_field"],
-                              valueColumn: "_value")
-            |> yield()
             """
             if len(aggregate_functions) > 1
-            else "|> yield()"
+            else ""
         )
 
         logger.debug("Union: %s", union)
@@ -228,6 +231,12 @@ class InfluxQueryBuilder(spi.QueryBuilder):
 
             {aggregate_query}
             {union}
+            |> pivot(rowKey: ["_time",
+                    "_measurement",
+                    "aggregate_function"],
+                    columnKey: ["_field"],
+                    valueColumn: "_value")
+            |> yield()
         """
 
         query_parameters: dict[str, object] = {
