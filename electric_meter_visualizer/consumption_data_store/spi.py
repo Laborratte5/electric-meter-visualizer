@@ -63,7 +63,63 @@ class Query(abc.ABC):
         raise NotImplementedError
 
 
-class QueryBuilder(abc.ABC):
+class FilterBuilder(abc.ABC):
+    """This interface provides a way to filter
+    data (in a Query) stored in a ConsumptionDataStore
+    """
+
+    # Do not set the return type of these functions
+    # as it is "generic" and should be set only
+    # in sub classes
+
+    @abc.abstractmethod
+    def filter_aggregate_function(
+        self, aggregate_function_list: set[AggregateFunction]
+    ):
+        """Filter the consumption data based on the AggregateFunction
+        that was used to created a DataPoint
+
+        Args:
+            aggregate_function_list (set[AggregateFunction]): Only datapoints
+            created by AggregateFunctions contained in this list will be returned
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def filter_source(self, id_list: set[UUID]):
+        """
+        Filter the consumption data based on the source id
+
+        Arguments:
+            - id_list must be a set of UUIDs
+              Only datapoints from sources contained in this list will be returned
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def filter_start(self, start_date: datetime):
+        """
+        Filter the consumption data based on the start_date of the measurement
+
+        Arguments:
+            - start_date must be datetime
+              Only datapoints with a timestamp at start_date or later will be returned
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def filter_stop(self, stop_date: datetime):
+        """
+        Filter the consumption data basaed on the stop_date of the measurement
+
+        Arguments:
+            - stop_date must be datetime
+              Only datapoints with a timestamp earlier than stop_date will be returned
+        """
+        raise NotImplementedError
+
+
+class QueryBuilder(FilterBuilder):
     """
     Used to create concrete Query objects
     """
@@ -83,46 +139,18 @@ class QueryBuilder(abc.ABC):
     def filter_aggregate_function(
         self, aggregate_function_list: set[AggregateFunction]
     ) -> "QueryBuilder":
-        """Filter the consumption data based on the AggregateFunction
-        that was used to created a DataPoint
-
-        Args:
-            aggregate_function_list (set[AggregateFunction]): Only datapoints
-            created by AggregateFunctions contained in this list will be returned
-        """
         raise NotImplementedError
 
     @abc.abstractmethod
     def filter_source(self, id_list: set[UUID]) -> "QueryBuilder":
-        """
-        Filter the consumption data based on the source id
-
-        Arguments:
-            - id_list must be a set of UUIDs
-              Only datapoints from sources contained in this list will be returned
-        """
         raise NotImplementedError
 
     @abc.abstractmethod
     def filter_start(self, start_date: datetime) -> "QueryBuilder":
-        """
-        Filter the consumption data based on the start_date of the measurement
-
-        Arguments:
-            - start_date must be datetime
-              Only datapoints with a timestamp at start_date or later will be returned
-        """
         raise NotImplementedError
 
     @abc.abstractmethod
     def filter_stop(self, stop_date: datetime) -> "QueryBuilder":
-        """
-        Filter the consumption data basaed on the stop_date of the measurement
-
-        Arguments:
-            - stop_date must be datetime
-              Only datapoints with a timestamp earlier than stop_date will be returned
-        """
         raise NotImplementedError
 
     @abc.abstractmethod
