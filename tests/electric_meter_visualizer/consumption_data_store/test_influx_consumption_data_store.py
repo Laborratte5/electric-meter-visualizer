@@ -80,6 +80,94 @@ class ConsumptionDataStoreFactoryTest(unittest.TestCase):
         self.assertIsNotNone(data_store)
 
 
+class FilterBuilderTest(unittest.TestCase):
+    """Test the influx FilterBuilder implementation"""
+
+    # pylint: disable=protected-access
+
+    def setUp(self) -> None:
+        self.filter_builder: influx.InfluxFilterBuilder = influx.InfluxFilterBuilder()
+
+    def test_filter_no_aggregate_function_list(self):
+        """Test if no aggregate function list defaults to no filter"""
+        self.assertEqual(self.filter_builder._aggregate_function_filters, "")
+
+    def test_filter_empty_aggregate_function_list(self):
+        """Test if empty aggregate function list defaults to no filter"""
+        self.filter_builder.filter_aggregate_function(set())
+
+        self.assertEqual(self.filter_builder._aggregate_function_filters, "")
+
+    def test_filter_aggregate_function(self):
+        """Test if aggregate filter contains aggregate function"""
+        self.filter_builder.filter_aggregate_function({AggregateFunction.SUM})
+
+        self.assertEqual(
+            self.filter_builder._aggregate_function_filters,
+            '|> filter(fn: (r) => r.aggregate_function == "SUM")',
+        )
+
+    def test_filter_multiple_aggregate_functions(self):
+        """Test if the aggregate filter string is correct with multiple aggregate functions"""
+        self.filter_builder.filter_aggregate_function(
+            {AggregateFunction.SUM, AggregateFunction.MAX}
+        )
+
+        filter_string: str = _normalize_text(
+            self.filter_builder._aggregate_function_filters
+        )
+
+        # set is unordered so both filters could be constructed
+        self.assertTrue(
+            filter_string
+            == _normalize_text(
+                '|> filter(fn: (r) => r.aggregate_function == "SUM" or \
+                 r.aggregate_function == "MAX")'
+            )
+            or filter_string
+            == _normalize_text(
+                '|> filter(fn: (r) => r.aggregate_function == "MAX" or \
+                 r.aggregate_function == "SUM")'
+            )
+        )
+
+    def test_filter_no_source(self):
+        """Test if source filter string is empty"""
+        self.assertEqual(self.filter_builder._source_filters, "")
+
+    def test_filter_source(self):
+        """Test if source filter contains source id"""
+        source_id: UUID = uuid.uuid4()
+        self.filter_builder.filter_source({source_id})
+
+        self.assertEqual(
+            self.filter_builder._source_filters,
+            f'|> filter(fn: (r) => r._measurement == "{source_id}")',
+        )
+
+    def test_filter_multiple_sources(self):
+        """Test if the source filter string is correct with multiple sources"""
+        first_source_id: UUID = uuid.uuid4()
+        second_source_id: UUID = uuid.uuid4()
+        self.filter_builder.filter_source({first_source_id, second_source_id})
+
+        filter_string: str = _normalize_text(self.filter_builder._source_filters)
+
+        # set is unordered so both filters could be constructed
+        self.assertTrue(
+            filter_string
+            == _normalize_text(
+                f'|> filter(fn: (r) => r._measurement == "{first_source_id}" or\
+                 r._measurement == "{second_source_id}")'
+            )
+            or filter_string
+            == _normalize_text(
+                f'|> filter(fn: (r) => r._measurement == "{second_source_id}" or\
+                 r._measurement == "{first_source_id}")'
+            )
+        )
+
+
 class QueryBuilderTest(unittest.TestCase):
     """Test the influx QueryBuilder implementation"""
 
@@ -124,85 +212,6 @@ class QueryBuilderTest(unittest.TestCase):
 
         self.assertEqual(
             self.query_builder._buckets, {"test_bucket_1", "test_bucket_2"}
-        )
-
-    def test_filter_no_aggregate_function_list(self):
-        """Test if no aggregate function list defaults to no filter"""
-        self.assertEqual(self.query_builder._aggregate_function_filters, "")
-
-    def test_filter_empty_aggregate_function_list(self):
-        """Test if empty aggregate function list defaults to no filter"""
-        self.query_builder.filter_aggregate_function(set())
-
-        self.assertEqual(self.query_builder._aggregate_function_filters, "")
-
-    def test_filter_aggregate_function(self):
-        """Test if aggregate filter contains aggregate function"""
-        self.query_builder.filter_aggregate_function({AggregateFunction.SUM})
-
-        self.assertEqual(
-            self.query_builder._aggregate_function_filters,
-            '|> filter(fn: (r) => r.aggregate_function == "SUM")',
-        )
-
-    def test_filter_multiple_aggregate_functions(self):
-        """Test if the aggregate filter string is correct with multiple aggregate functions"""
-        self.query_builder.filter_aggregate_function(
-            {AggregateFunction.SUM, AggregateFunction.MAX}
-        )
-
-        filter_string: str = _normalize_text(
-            self.query_builder._aggregate_function_filters
-        )
-
-        # set is unordered so both filters could be constructed
-        self.assertTrue(
-            filter_string
-            == _normalize_text(
-                '|> filter(fn: (r) => r.aggregate_function == "SUM" or \
-                 r.aggregate_function == "MAX")'
-            )
-            or filter_string
-            == _normalize_text(
-                '|> filter(fn: (r) => r.aggregate_function == "MAX" or \
-                 r.aggregate_function == "SUM")'
-            )
-        )
-
-    def test_filter_no_source(self):
-        """Test if source filter string is empty"""
-        self.assertEqual(self.query_builder._source_filters, "")
-
-    def test_filter_source(self):
-        """Test if source filter contains source id"""
-        source_id: UUID = uuid.uuid4()
-        self.query_builder.filter_source({source_id})
-
-        self.assertEqual(
-            self.query_builder._source_filters,
-            f'|> filter(fn: (r) => r._measurement == "{source_id}")',
-        )
-
-    def test_filter_multiple_sources(self):
-        """Test if the source filter string is correct with multiple sources"""
-        first_source_id: UUID = uuid.uuid4()
-        second_source_id: UUID = uuid.uuid4()
-        self.query_builder.filter_source({first_source_id, second_source_id})
-
-        filter_string: str = _normalize_text(self.query_builder._source_filters)
-
-        # set is unordered so both filters could be constructed
-        self.assertTrue(
-            filter_string
-            == _normalize_text(
-                f'|> filter(fn: (r) => r._measurement == "{first_source_id}" or\
-                 r._measurement == "{second_source_id}")'
-            )
-            or filter_string
-            == _normalize_text(
-                f'|> filter(fn: (r) => r._measurement == "{second_source_id}" or\
-                 r._measurement == "{first_source_id}")'
-            )
         )
 
     def test_filter_no_start(self):
