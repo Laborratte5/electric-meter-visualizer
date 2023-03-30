@@ -28,6 +28,62 @@ REVERSE_AGGREGATE_MAPPING: dict[str, spi.AggregateFunction] = {
 }
 
 
+class InfluxFilterBuilder(spi.FilterBuilder):
+    """Build to create simple filters in flux"""
+
+    def __init__(self) -> None:
+        """Create a new InfluxFilterBuilder instance
+
+        Note: The InfluxFilterBuilder is only used internally
+              there should be no need to create an InfluxFilterBuilder
+              instance outside of the `influx.py` module
+        """
+        super().__init__()
+        self._aggregate_function_filters: str = ""
+        self._source_filters: str = ""
+
+    def filter_aggregate_function(
+        self, aggregate_function_list: set[spi.AggregateFunction]
+    ):
+        condition: str = " or ".join(
+            f'r.aggregate_function == "{aggregate_function.name}"'
+            for aggregate_function in aggregate_function_list
+        )
+
+        if condition:
+            self._aggregate_function_filters = f"|> filter(fn: (r) => {condition})"
+
+        logger.debug(
+            "Aggregate Function Filter: '%s'", self._aggregate_function_filters
+        )
+
+    def filter_source(self, id_list: set[UUID]):
+        condition: str = " or ".join(
+            f'r._measurement == "{meter_id}"' for meter_id in id_list
+        )
+
+        if condition:
+            self._source_filters = f"|> filter(fn: (r) => {condition})"
+
+        logger.debug("Query Filter: '%s'", self._source_filters)
+
+    def filter_start(self, start_date: datetime):
+        # TODO operation not supported
+        raise NotImplementedError
+
+    def filter_stop(self, stop_date: datetime):
+        # TODO operation not supported
+        raise NotImplementedError
+
+    def build(self) -> str:
+        """Create the Influx Query filter string
+
+        Returns:
+            str: Query string representing the filters of this filter builder
+        """
+        return self._source_filters + self._aggregate_function_filters
+
+
 class InfluxQuery(spi.Query):
     """
     Representation of a Flux query
@@ -100,8 +156,7 @@ class InfluxQueryBuilder(spi.QueryBuilder):
         self.query_api: influx_query_api.QueryApi = query_api
         self._default_bucket: str = default_bucket
         self._buckets: set[str] = {default_bucket}
-        self._source_filters: str = ""
-        self._aggregate_function_filters: str = ""
+        self._filter_builder: InfluxFilterBuilder = InfluxFilterBuilder()
         self._start_date: object = timedelta(days=0)
         self._stop_date: object = datetime.now()
         self.organisation: str = organisation
@@ -114,30 +169,13 @@ class InfluxQueryBuilder(spi.QueryBuilder):
         return self
 
     def filter_source(self, id_list: set[UUID]) -> spi.QueryBuilder:
-        condition: str = " or ".join(
-            f'r._measurement == "{meter_id}"' for meter_id in id_list
-        )
-
-        if condition:
-            self._source_filters = f"|> filter(fn: (r) => {condition})"
-
-        logger.debug("Query Filter: '%s'", self._source_filters)
+        self._filter_builder.filter_source(id_list)
         return self
 
     def filter_aggregate_function(
         self, aggregate_function_list: set[spi.AggregateFunction]
     ) -> spi.QueryBuilder:
-        condition: str = " or ".join(
-            f'r.aggregate_function == "{aggregate_function.name}"'
-            for aggregate_function in aggregate_function_list
-        )
-
-        if condition:
-            self._aggregate_function_filters = f"|> filter(fn: (r) => {condition})"
-
-        logger.debug(
-            "Aggregate Function Filter: '%s'", self._aggregate_function_filters
-        )
+        self._filter_builder.filter_aggregate_function(aggregate_function_list)
         return self
 
     def filter_start(self, start_date: datetime) -> spi.QueryBuilder:
@@ -175,8 +213,7 @@ class InfluxQueryBuilder(spi.QueryBuilder):
                 + f"""
                 data_{i} = from(bucket: _bucket_{i})
                     |> range(start: _start_date, stop: _stop_date)
-                    {self._source_filters}
-                    {self._aggregate_function_filters}
+                    {self._filter_builder.build()}
             """
             )
             bucket_names[f"_bucket_{i}"] = bucket
