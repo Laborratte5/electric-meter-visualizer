@@ -67,14 +67,6 @@ class InfluxFilterBuilder(spi.FilterBuilder):
 
         logger.debug("Query Filter: '%s'", self._source_filters)
 
-    def filter_start(self, start_date: datetime):
-        # TODO operation not supported
-        raise NotImplementedError
-
-    def filter_stop(self, stop_date: datetime):
-        # TODO operation not supported
-        raise NotImplementedError
-
     def build(self) -> str:
         """Create the Influx Query filter string
 

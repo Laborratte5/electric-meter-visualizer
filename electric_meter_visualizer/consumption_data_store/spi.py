@@ -96,28 +96,6 @@ class FilterBuilder(abc.ABC):
         """
         raise NotImplementedError
 
-    @abc.abstractmethod
-    def filter_start(self, start_date: datetime):
-        """
-        Filter the consumption data based on the start_date of the measurement
-
-        Arguments:
-            - start_date must be datetime
-              Only datapoints with a timestamp at start_date or later will be returned
-        """
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def filter_stop(self, stop_date: datetime):
-        """
-        Filter the consumption data basaed on the stop_date of the measurement
-
-        Arguments:
-            - stop_date must be datetime
-              Only datapoints with a timestamp earlier than stop_date will be returned
-        """
-        raise NotImplementedError
-
 
 class QueryBuilder(FilterBuilder):
     """
@@ -147,10 +125,24 @@ class QueryBuilder(FilterBuilder):
 
     @abc.abstractmethod
     def filter_start(self, start_date: datetime) -> "QueryBuilder":
+        """
+        Filter the consumption data based on the start_date of the measurement
+
+        Arguments:
+            - start_date must be datetime
+              Only datapoints with a timestamp at start_date or later will be returned
+        """
         raise NotImplementedError
 
     @abc.abstractmethod
     def filter_stop(self, stop_date: datetime) -> "QueryBuilder":
+        """
+        Filter the consumption data basaed on the stop_date of the measurement
+
+        Arguments:
+            - stop_date must be datetime
+              Only datapoints with a timestamp earlier than stop_date will be returned
+        """
         raise NotImplementedError
 
     @abc.abstractmethod
