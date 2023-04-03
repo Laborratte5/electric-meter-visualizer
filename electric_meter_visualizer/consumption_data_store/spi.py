@@ -466,6 +466,22 @@ class ConsumptionDataStore(abc.ABC):
         """
         raise NotImplementedError
 
+    def put_data_batch(self, datapoints: set[Datapoint], bucket: Bucket):
+        """Store multiple Datapoints in the specified bucket of this ConsumptionDataStore
+
+        Note: This method has a default implementation, which simply loops over the datapoints
+              and inserts them one after another, and thus can be used even if the
+              spi does not support batch operations.
+              However spi Implementors are strongly encouraged to override the default
+              implementation with a more performant approach.
+
+        Args:
+            datapoints (set[Datapoint]): Datapoints that should be added to the Bucket
+            bucket (Bucket): The Bucket the datapoints will be stored in
+        """
+        for datapoint in datapoints:
+            self.put_data(datapoint, bucket)
+
     @abc.abstractmethod
     def delete_data(self, request: DeleteRequest):
         """Delete data from this ConsumptionDataStore
