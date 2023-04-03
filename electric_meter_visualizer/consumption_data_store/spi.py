@@ -369,6 +369,34 @@ class DownsampleTask(abc.ABC):
         raise NotImplementedError
 
 
+class DownsampleTaskBuilder(FilterBuilder):
+    """Used to create concrete DownsampleTask objects"""
+
+    @abc.abstractmethod
+    def filter_aggregate_function(
+        self, aggregate_function_list: set[AggregateFunction]
+    ) -> "DownsampleTaskBuilder":
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def filter_source(self, id_list: set[UUID]) -> "DownsampleTaskBuilder":
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def build(
+        self, aggregate_window: timedelta, aggregate_functions: set[AggregateFunction]
+    ) -> None:
+        """Create the DownsampleTask specified with this builder object
+
+        Args:
+            aggregate_window (timedelta): time window in which data is aggregated
+                                          using the AggregateFunctions
+            aggregate_functions (set[AggregateFunction]): `AggregateFunction`s
+                    which are used to aggregate the data of each aggregate_window
+        """
+        raise NotImplementedError
+
+
 class ConsumptionDataStore(abc.ABC):
     """
     This class is used to abstract the interaction with a ConsumptionDataStore
