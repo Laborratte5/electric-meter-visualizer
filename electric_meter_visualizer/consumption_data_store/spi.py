@@ -453,6 +453,38 @@ class ConsumptionDataStore(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
+    def create_bucket(self, name: str) -> Bucket:
+        """Create a new Bucket and add it to this ConsumptionDataStore
+
+        Args:
+            name (str): The name of the new Bucket
+
+        Returns:
+            Bucket: The new created Bucket
+        """
+        raise NotImplementedError
+
+    @property
+    @abc.abstractmethod
+    def buckets(self) -> list[Bucket]:
+        """List of Buckets in this ConsumptionDataStore
+
+        Returns:
+            list[Bucket]: Buckets in this ConsumptionDataStore
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def create_downsample_task(self) -> DownsampleTaskBuilder:
+        """Create a new DownsampleTaskBuilder for this ConsumptionDataStore
+
+        Returns:
+            DownsampleTaskBuilder: A DownsampleTaskBuilder for the specific
+                implementation of this ConsumptionDataStore
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def put_data(self, datapoint: Datapoint, bucket: Bucket):
         """
         Store a Datapoint in the specified bucket of this ConsumptionDataStore
