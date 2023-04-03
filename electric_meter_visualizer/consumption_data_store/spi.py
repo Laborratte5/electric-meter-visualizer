@@ -97,18 +97,140 @@ class FilterBuilder(abc.ABC):
         raise NotImplementedError
 
 
+class Bucket(abc.ABC):
+    """Representation of a Bucket in the `ConsumptionDataStore`
+
+    A bucket is a container for data in the ConsumptionDataStore,
+    each `Datapoint` is inserted in one Bucket.
+    A bucket can have a retention period which describes the time window
+    datapoints in this bucket are garanteed not to be deleted.
+    If a Datapoint is older than the given retention period based on the
+    current date, the datapoint may be deleted at any time.
+    A bucket can also have a `DownsampleTask` which is executed periodically
+    to aggregate data inside this bucket and put the results into another bucket
+    with a longer retention period.
+    """
+
+    def __init__(self):
+        self._retention_period: timedelta = timedelta(seconds=0)
+        self._downsample_tasks_mapping: dict["DownsampleTask", "Bucket"] = {}
+
+    @property
+    def retention_period(self) -> timedelta:
+        """The time data is garanteed to reside in this bucket before it is deleted.
+
+        A retention_period of zero seconds indicates no retention.
+
+        Returns:
+            timedelta: The current retention period
+        """
+        return self._retention_period
+
+    @retention_period.setter
+    def retention_period(self, retention_period: timedelta) -> None:
+        """Sets the new retention period for this bucket
+
+        Setting a new retention period for a bucket also affects data that was
+        inserted before the change of the retention period.
+
+        A retention_period of zero seconds indicates no retention.
+
+        Args:
+            retention_period (timedelta): The time data is garanteed to reside in this bucket
+                                          before it is deleted.
+        """
+        self._set_retention_period(retention_period)
+        self._retention_period = retention_period
+
+    @abc.abstractmethod
+    def _set_retention_period(self, retention_period: timedelta) -> None:
+        """Sets the new retention period for this bucket
+
+        Implementors of this spi should use this method to register the retention period.
+
+        Args:
+            retention_period (timedelta): The time data is garanteed to resied in this bucket
+                                          before it is deleted.
+        """
+        raise NotImplementedError
+
+    @property
+    def downsample_tasks(self) -> list["DownsampleTask"]:
+        """A list with the current DownsampleTasks
+
+        Returns:
+            list[DownsampleTask]: An list with the current DownsampleTaks
+                                  of this bucket
+        """
+        return list(self._downsample_tasks_mapping.keys())
+
+    def set_downsample_task(
+        self, task: "DownsampleTask", destination_bucket: "Bucket"
+    ) -> None:
+        """Add a new DownsampleTask with the given destination Bucket
+
+        If the given task is not already in this buckets task list,
+        add the task with the given destination bucket.
+        If the given task already is in this buckets task list,
+        set the desination bucket of this task to the new given
+        `destination_bucket`
+
+        Args:
+            task (DownsampleTask): The new or already exisiting DownsampleTask
+            destination_bucket (Bucket): The new destination bucket for the given
+                                         DownsampleTask
+        """
+
+        if task in self.downsample_tasks:
+            # Remove destination for existing task
+            existing_destination: "Bucket" = self._downsample_tasks_mapping[task]
+            task.uninstall(self, existing_destination)
+
+        # Add task with new destination
+        task.install(self, destination_bucket)
+        self._downsample_tasks_mapping[task] = destination_bucket
+
+    def remove_downsample_task(self, task: "DownsampleTask") -> None:
+        """Remove the given DownsampleTask from this bucket
+
+        If the given DownsampleTaks does not exist in this Bucket
+        this method does not change anything.
+
+        Args:
+            task (DownsampleTask): The DownsampleTask that should be removed
+        """
+        self._downsample_tasks_mapping.pop(task, None)
+
+    def get_dowsample_task_destination(self, task: "DownsampleTask") -> Optional:
+        """Return an Optional with the given DownsampelTasks destination Bucket
+
+        Args:
+            task (DownsampleTask): The task of which the destination Bucket
+                                   should be returned
+
+        Returns:
+            Optional: Containing the destination Bucket if the given DownsampleTask
+                      was added to this Bucket or an empty Optional if the given task
+                      never was added to this Bucket
+        """
+
+        if task in self.downsample_tasks:
+            return Optional.of(self._downsample_tasks_mapping[task])
+        return Optional.empty()
+
+
 class QueryBuilder(FilterBuilder):
     """
     Used to create concrete Query objects
     """
 
     @abc.abstractmethod
-    def filter_bucket(self, bucket_list: set[str]) -> "QueryBuilder":
+    def filter_bucket(self, bucket_list: set[Bucket]) -> "QueryBuilder":
         """
         Filter the consumption data based on the buckets this data resides
 
         Arguments:
-            - bucket_list must be a set of string
+            - bucket_list must be a set of Bucket
               Only datapoints from a bucket contained in this list will be returned
         """
         raise NotImplementedError
@@ -186,7 +308,7 @@ class DeleteRequest:
     deleting Datapoints from a ConsumptionDataStore
     """
 
-    bucket: str
+    bucket: Bucket
     start_date: datetime
     stop_date: datetime
     _source: Optional = field(init=False, default=Optional.empty())
@@ -215,6 +337,36 @@ class DeleteRequest:
             self._aggregate_function = Optional.of(aggregate_function)
         else:
             self._source = Optional.empty()
+
+
+class DownsampleTask(abc.ABC):
+    """A downsample task which specifies how to downsample (older) data points"""
+
+    @abc.abstractmethod
+    def install(self, source_bucket: Bucket, destination_bucket: Bucket):
+        """Install this DownsampleTask with the specified `source_bucket` and `destination_bucket`
+
+        Note: This method should never be called outside of the spi implementation
+              Use `set_downsample_task` of Bucket instead.
+
+        Args:
+            source_bucket (Bucket): Bucket containing the data that should be downsampled
+            destination_bucket (Bucket): Bucket the downsampled results will be put
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def uninstall(self, source_bucket: Bucket, destination_bucket: Bucket):
+        """Uninstall this DownsampleTask between `source_bucket` and `destination_bucket`
+
+        Note: This method should never be called outside of the spi implementation
+              Use `clear_downsample_task` of Bucket instead.
+
+        Args:
+            source_bucket (Bucket): Bucket containing the data that should be downsampled
+            destination_bucket (Bucket): Bucket the downsampled results will be put
+        """
+        raise NotImplementedError
 
 
 class ConsumptionDataStore(abc.ABC):
@@ -273,16 +425,16 @@ class ConsumptionDataStore(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def put_data(self, datapoint: Datapoint, bucket: str):
+    def put_data(self, datapoint: Datapoint, bucket: Bucket):
         """
         Store a Datapoint in the specified bucket of this ConsumptionDataStore
 
         Arguments:
             - datapoint must be a Datapoint
               The Datapoint that should be stored in this ConsumptionDataStore
-            - bucket must be a string
-              The name of the bucket the data should be put in
-              If no bucket with a given name exists a new bucket is created
+            - bucket must be a Bucket
+              The Bucket the data should be put in. The Bucket must already exist
+              in the ConsumptionDataStore
         """
         raise NotImplementedError
 
@@ -296,11 +448,11 @@ class ConsumptionDataStore(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def delete_bucket(self, bucket: str):
+    def delete_bucket(self, bucket: Bucket):
         """Delete a bucket with all datapoints from this ConsumptionDataStore
 
         Args:
-            bucket (str): the bucket that should be deleted
+            bucket (Bucket): the bucket that should be deleted
         """
         raise NotImplementedError
 
