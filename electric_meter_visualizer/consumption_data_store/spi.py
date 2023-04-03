@@ -286,22 +286,6 @@ class QueryBuilder(FilterBuilder):
         raise NotImplementedError
 
 
-class RetentionPolicy(abc.ABC):  # pylint: disable=too-few-public-methods
-    """
-    Representation of a retention policy
-    which specifies how to handle (older) data points
-    """
-
-    @abc.abstractmethod
-    def execute(self):
-        """
-        Executes this retention policy
-        Depending on the retention policy this
-        leads to data points being deleted or aggregated
-        """
-        raise NotImplementedError
-
-
 @dataclass
 class DeleteRequest:
     """Class encapsulating mandatory and optional parameters used when
@@ -403,46 +387,6 @@ class ConsumptionDataStore(abc.ABC):
     It provides methods to create, retrieve and delete consumption data points
     """
 
-    def __init__(self):
-        self.__retention_policies: list[RetentionPolicy] = []
-
-    def add_retention_policy(self, retention_policy: RetentionPolicy):
-        """
-        Add a retention policy to this ConsumptionDataStore
-
-        All RetentionPolicies can be executed using the execute_retention_policy funtion
-        Note that individual RetentionPolicies still can be executed on demand using the
-        RetentionPolicy.execute() function
-
-        Arguments:
-            - retention_policy must be RetentionPolicy
-              The RetentionPolicy that should be added
-        """
-        self.__retention_policies.append(retention_policy)
-
-    def remove_retention_policy(self, retention_policy: RetentionPolicy):
-        """
-        Remove a retention policy from this ConsumptionDataStore
-
-        Note that individual RetentionPolicies still can be executed on demand using the
-        RetentionPolicy.execute() function
-
-        Arguments:
-            - retention_policy must be RetentionPolicy
-              The RetentionPolicy that should be removed
-        """
-        self.__retention_policies.remove(retention_policy)
-
-    def execute_retention_policy(self):
-        """
-        Execute all retention policies added to this ConsumptionData
-
-        Note that individual RetentionPolicies still can be executed on demand using the
-        RetentionPolicy.execute() function
-        """
-        for retention_policy in self.__retention_policies:
-            retention_policy.execute()
-
     @abc.abstractmethod
     def create_query(self) -> QueryBuilder:
         """
@@ -539,89 +483,6 @@ class ConsumptionDataStore(abc.ABC):
         during the usage of this ConsumptionDataStore.
         After `close()` was called no further calls to this object are allowed
         """
-
-
-class BaseRetentionPolicy(RetentionPolicy):  # pylint: disable=too-few-public-methods
-    """
-    Basic RetentionPolicy
-
-    This is the base class for simple RetentionPolicies with the following algorithm:
-    - get_data, used to return all relevant Datapoints
-    - aggregate, used to aggregate the datapoints based on the desired RetentionPolicy
-    - store, used to store the new aggregated Datapoints
-    - remove, used to remove the old datapoints based on the desired RetentionPolicy
-
-    Member variables:
-        - datastore a ConsumptionDataStore
-          Data store to which this RetentionPolicy applies
-        - source_bucket
-          Source bucket to which this RetentionPolicy applies
-        - destination_bucket
-          if this RetentionPolicy aggregates data from the source_bucket the aggregated
-          data should be written into the destination bucket
-    """
-
-    def __init__(
-        self,
-        datastore: ConsumptionDataStore,
-        source_bucket: str,
-        destination_bucket: str,
-    ):
-        self.datastore: ConsumptionDataStore = datastore
-        self.source_bucket: str = source_bucket
-        self.destination_bucket: str = destination_bucket
-
-    def execute(self):
-        """
-        Execute this RetentionPolicy by running the algorithm described above
-        """
-        data: list[Datapoint] = self._get_data()
-        aggregated_data: list[Datapoint] = self._aggregate(data)
-        self._store(aggregated_data)
-        self._remove(data)
-
-    def _get_data(self) -> list[Datapoint]:
-        """
-        Returns all Datapoints that are relevant for this RetentionPolicy
-
-        Returns: list of relevant Datapoints
-        """
-        raise NotImplementedError
-
-    def _aggregate(self, data_points: list[Datapoint]) -> list[Datapoint]:
-        """
-        Aggregates the given data according to retention policy
-
-        Arguments:
-            - data_points list of Datapoints
-              The Datapoints that should be aggregated according to this retention policy
-
-        Returns: list of aggregated Datapoints
-        """
-        raise NotImplementedError
-
-    def _store(self, result: list[Datapoint]):
-        """
-        Stores the given data into the destination_bucket of this RetentionPolicy
-
-        Arguments:
-            - result list of Datapoints
-              The processed Datapoints that should be stored into the destation_bucket
-        """
-        raise NotImplementedError
-
-    def _remove(self, old_data: list[Datapoint]):
-        """
-        Removes old Datapoints from this RetentionPolicy
-
-        Removes the old Datapoints (that got aggregated)
-        from the source_bucket of this RetentionPolicy
-
-        Arguments:
-            - old_data list of Datapoints
-              The old Datapoints that should be removed from the source_bucket
-        """
-        raise NotImplementedError
 
 
 class ConsumptionDataStoreFactory(abc.ABC):  # pylint: disable=R0903
