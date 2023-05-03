@@ -31,7 +31,7 @@ REVERSE_AGGREGATE_MAPPING: dict[str, spi.AggregateFunction] = {
 
 
 class InfluxFilterBuilder(spi.FilterBuilder):
-    """Build to create simple filters in flux"""
+    """Builder to create simple filters in flux"""
 
     def __init__(self) -> None:
         """Create a new InfluxFilterBuilder instance
