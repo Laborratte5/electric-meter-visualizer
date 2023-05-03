@@ -111,9 +111,25 @@ class Bucket(abc.ABC):
     with a longer retention period.
     """
 
-    def __init__(self):
+    def __init__(self, identifier: str):
+        """Create a new Bucket
+
+        Args:
+            identifier (str): Identifier that uniquely identifies this Bucket
+                              in the ConsumptionDataStore
+        """
+        self._identifier: str = identifier
         self._retention_period: timedelta = timedelta(seconds=0)
         self._downsample_tasks_mapping: dict["DownsampleTask", "Bucket"] = {}
+
+    @property
+    def identifier(self) -> str:
+        """A string that uniquely identifies this Bucket in the ConsumptionDataStore
+
+        Returns:
+            str: The unique identifier of this Bucket
+        """
+        return self._identifier
 
     @property
     def retention_period(self) -> timedelta:
