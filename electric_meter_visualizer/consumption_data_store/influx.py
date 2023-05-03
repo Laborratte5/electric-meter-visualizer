@@ -7,8 +7,10 @@ from datetime import timedelta
 import logging
 import influxdb_client
 from influxdb_client.client import flux_table
+import influxdb_client.domain as influx_domain
 import influxdb_client.client.query_api as influx_query_api
 import influxdb_client.client.write_api as influx_write_api
+import influxdb_client.client.bucket_api as influx_bucket_api
 from electric_meter_visualizer.consumption_data_store import spi
 
 logger = logging.getLogger(__name__)
@@ -132,6 +134,41 @@ class InfluxQuery(spi.Query):
         pass
 
 
+class InfluxBucket(spi.Bucket):
+    """Representation of a Bucket in the Influx Database"""
+
+    def __init__(
+        self, bucket_api: influx_bucket_api.BucketsApi, bucket: influx_domain.Bucket
+    ):
+        super().__init__(bucket.id)
+        self._bucket_api: influx_bucket_api.BucketsApi = bucket_api
+        self._bucket: influx_domain.Bucket = bucket
+
+        # Set retention period
+        retention_rule_list: list[
+            influx_domain.BucketRetentionRules
+        ] = self._bucket.retention_rules
+        if retention_rule_list:
+            retetion_rule: influx_domain.BucketRetentionRules = retention_rule_list[0]
+            self._retention_period = timedelta(seconds=int(retetion_rule.every_seconds))
+
+        # TODO set existing downsample tasks with this bucket as source
+
+    def _set_retention_period(self, retention_period: timedelta) -> None:
+        every_seconds: int = int(retention_period.total_seconds())
+        shard_group_duration_seconds: int = int(
+            retention_period.total_seconds() / 2
+        )  # TODO ggf besser berechnen bzw. anpassen
+
+        self._bucket.retention_rules = [
+            influx_domain.BucketRetentionRules(
+                every_seconds=every_seconds,
+                shard_group_duration_seconds=shard_group_duration_seconds,
+            )
+        ]
+        self._bucket_api.update_bucket(self._bucket)
+
+
 class InfluxQueryBuilder(spi.QueryBuilder):
     """
     Helper class to build InfluxQuery objects
@@ -143,20 +180,20 @@ class InfluxQueryBuilder(spi.QueryBuilder):
         self,
         query_api: influx_query_api.QueryApi,
         organisation: str,
-        default_bucket: str,
+        default_buckets: set[spi.Bucket],
     ):
         self.query_api: influx_query_api.QueryApi = query_api
-        self._default_bucket: str = default_bucket
-        self._buckets: set[str] = {default_bucket}
+        self._default_buckets: set[spi.Bucket] = default_buckets
+        self._buckets: set[spi.Bucket] = self._default_buckets
         self._filter_builder: InfluxFilterBuilder = InfluxFilterBuilder()
         self._start_date: object = timedelta(days=0)
         self._stop_date: object = datetime.now()
         self.organisation: str = organisation
 
-    def filter_bucket(self, bucket_list: set[str]) -> spi.QueryBuilder:
+    def filter_bucket(self, bucket_list: set[spi.Bucket]) -> spi.QueryBuilder:
         self._buckets = bucket_list
         if not bucket_list:
-            self._buckets = {self._default_bucket}
+            self._buckets = self._default_buckets
 
         return self
 
@@ -196,19 +233,19 @@ class InfluxQueryBuilder(spi.QueryBuilder):
 
         data_query: str = ""
         aggregate_query: str = ""
-        bucket_names: dict[str, str] = {}
+        bucket_ids: dict[str, str] = {}
         aggregate_function_data: list[str] = []
         for i, bucket in enumerate(self._buckets):
             # Build data query
             data_query = (
-                data_query
+                data_query  # TODO Änderung auf bucketID testen
                 + f"""
-                data_{i} = from(bucket: _bucket_{i})
+                data_{i} = from(bucketID: _bucket_{i})
                     |> range(start: _start_date, stop: _stop_date)
                     {self._filter_builder.build()}
             """
             )
-            bucket_names[f"_bucket_{i}"] = bucket
+            bucket_ids[f"_bucket_{i}"] = bucket.identifier
 
             # Build aggregate functions
             if spi.AggregateFunction.RAW not in aggregate_functions:
@@ -269,7 +306,7 @@ class InfluxQueryBuilder(spi.QueryBuilder):
         """
 
         query_parameters: dict[str, object] = {
-            **bucket_names,
+            **bucket_ids,
             "_start_date": self._start_date,
             "_stop_date": self._stop_date,
         }
@@ -284,22 +321,30 @@ class InfluxConsumptionDataStore(spi.ConsumptionDataStore):
     This class implements the ConsumptionDataStore backed by an InfluxDatabase
     """
 
-    def __init__(self, url: str, token: str, organisation: str, default_bucket: str):
+    def __init__(self, url: str, token: str, organisation: str):
         super().__init__()
         self.influx_client: influxdb_client.InfluxDBClient = (
             influxdb_client.InfluxDBClient(url=url, token=token, org=organisation)
         )
+        self.bucket_api: influx_bucket_api.BucketsApi = self.influx_client.buckets_api()
         self.query_api: influx_query_api.QueryApi = self.influx_client.query_api()
         self.write_api: influx_write_api.WriteApi = self.influx_client.write_api()
         self.organisation = organisation
-        self.default_bucket: str = default_bucket
+
+        # Set default_buckets to all buckets
+        # This may lead to missing buckets due to pagination
+        # https://influxdb-client.readthedocs.io/en/latest/api.html#influxdb_client.BucketsApi.find_buckets
+        self.default_buckets: set[spi.Bucket] = {
+            InfluxBucket(self.bucket_api, influx_bucket)
+            for influx_bucket in self.bucket_api.find_buckets(org=organisation)
+        }
 
     def create_query(self) -> spi.QueryBuilder:
         return InfluxQueryBuilder(
-            self.query_api, self.organisation, self.default_bucket
+            self.query_api, self.organisation, self.default_buckets
         )
 
-    def put_data(self, datapoint: spi.Datapoint, bucket: str):
+    def put_data(self, datapoint: spi.Datapoint, bucket: spi.Bucket):
         point: influxdb_client.Point = (
             influxdb_client.Point(datapoint.source)
             .field("consumption", datapoint.value)
@@ -307,7 +352,7 @@ class InfluxConsumptionDataStore(spi.ConsumptionDataStore):
             .time(datapoint.timestamp)
         )
 
-        self.write_api.write(bucket, self.organisation, point)
+        self.write_api.write(bucket.identifier, self.organisation, point)
 
     def delete_data(self, request: spi.DeleteRequest):
         delete_api: influxdb_client.DeleteApi = self.influx_client.delete_api()
@@ -326,11 +371,11 @@ class InfluxConsumptionDataStore(spi.ConsumptionDataStore):
             request.start_date,
             request.stop_date,
             predicate,
-            request.bucket,
+            request.bucket.identifier,
             self.organisation,
         )
 
-    def delete_bucket(self, bucket: str):
+    def delete_bucket(self, bucket: spi.Bucket):
         # TODO implement
         pass
 
