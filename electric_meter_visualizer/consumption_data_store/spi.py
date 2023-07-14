@@ -199,13 +199,15 @@ class Bucket(abc.ABC):
                                          DownsampleTask
         """
 
+        # pylint: disable=protected-access
+
         if task in self.downsample_tasks:
             # Remove destination for existing task
             existing_destination: "Bucket" = self._downsample_tasks_mapping[task]
-            task.uninstall(self, existing_destination)
+            task._uninstall(self, existing_destination)
 
         # Add task with new destination
-        task.install(self, destination_bucket)
+        task._install(self, destination_bucket)
         self._downsample_tasks_mapping[task] = destination_bucket
 
     def remove_downsample_task(self, task: "DownsampleTask") -> None:
@@ -353,8 +355,10 @@ class DeleteRequest:
 class DownsampleTask(abc.ABC):
     """A downsample task which specifies how to downsample (older) data points"""
 
+    # pylint: disable=too-few-public-methods
+
     @abc.abstractmethod
-    def install(self, source_bucket: Bucket, destination_bucket: Bucket):
+    def _install(self, source_bucket: Bucket, destination_bucket: Bucket):
         """Install this DownsampleTask with the specified `source_bucket` and `destination_bucket`
 
         Note: This method should never be called outside of the spi implementation
@@ -367,7 +371,7 @@ class DownsampleTask(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def uninstall(self, source_bucket: Bucket, destination_bucket: Bucket):
+    def _uninstall(self, source_bucket: Bucket, destination_bucket: Bucket):
         """Uninstall this DownsampleTask between `source_bucket` and `destination_bucket`
 
         Note: This method should never be called outside of the spi implementation
