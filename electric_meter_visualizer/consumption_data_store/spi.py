@@ -501,7 +501,7 @@ class ConsumptionDataStore(abc.ABC):
         """
 
 
-class ConsumptionDataStoreFactory(abc.ABC):  # pylint: disable=R0903
+class ConsumptionDataStoreFactory(abc.ABC):  # pylint: disable=too-few-public-methods
     """
     Used to initiate a concrete ConsumptionDataStore implementation
     """
