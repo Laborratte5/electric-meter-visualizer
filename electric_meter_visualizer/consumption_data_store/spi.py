@@ -1,6 +1,8 @@
 """
 This module represents a storage containing consumption data time series
 """
+
+# pylint: disable=fixme
 import abc
 from dataclasses import field, dataclass
 import enum
@@ -217,7 +219,10 @@ class Bucket(abc.ABC):
         """
         self._downsample_tasks_mapping.pop(task, None)
 
-    def get_dowsample_task_destination(self, task: "DownsampleTask") -> Optional:
+    def get_dowsample_task_destination(
+        self, task: "DownsampleTask"
+    ):  # TODO optional.Optional currently does not support TypeHints
+        # (wait for https://github.com/Python-Optional/optional.py/pull/43)
         """Return an Optional with the given DownsampelTasks destination Bucket
 
         Args:
@@ -311,8 +316,14 @@ class DeleteRequest:
     bucket: Bucket
     start_date: datetime
     stop_date: datetime
-    _source: Optional = field(init=False, default=Optional.empty())
-    _aggregate_function: Optional = field(init=False, default=Optional.empty())
+    _source = field(
+        init=False, default=Optional.empty()
+    )  # TODO optional.Optional currently does not support TypeHints
+    # (wait for https://github.com/Python-Optional/optional.py/pull/43)
+    _aggregate_function = field(
+        init=False, default=Optional.empty()
+    )  # TODO optional.Optional currently does not support TypeHints
+    # (wait for https://github.com/Python-Optional/optional.py/pull/43)
 
     @property
     def source(self):
