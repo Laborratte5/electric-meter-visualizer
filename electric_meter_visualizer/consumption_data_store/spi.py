@@ -355,7 +355,41 @@ class DeleteRequest:
 class DownsampleTask(abc.ABC):
     """A downsample task which specifies how to downsample (older) data points"""
 
-    # pylint: disable=too-few-public-methods
+    @property
+    @abc.abstractmethod
+    def source_bucket(self) -> Bucket:
+        """The bucket containing the data that is downsampled by this task"""
+        raise NotImplementedError
+
+    @property
+    @abc.abstractmethod
+    def destination_bucket(self) -> Bucket:
+        """The bucket where the downsampled data is stored"""
+        raise NotImplementedError
+
+    @property
+    @abc.abstractmethod
+    def aggregate_function_filters(self) -> set[AggregateFunction]:
+        """Only data created with the given aggregate functions are downsampled by this task"""
+        raise NotImplementedError
+
+    @property
+    @abc.abstractmethod
+    def data_sources(self) -> set[UUID]:
+        """Only data from the given energy_meter is downsampled by this task"""
+        raise NotImplementedError
+
+    @property
+    @abc.abstractmethod
+    def aggregate_window(self) -> timedelta:
+        """The time window in which data is aggregated using the `aggregate_functions`"""
+        raise NotImplementedError
+
+    @property
+    @abc.abstractmethod
+    def aggregate_functions(self) -> set[AggregateFunction]:
+        """The functions used to aggregate data inside the `aggregate_window`"""
+        raise NotImplementedError
 
     @abc.abstractmethod
     def _install(self, source_bucket: Bucket, destination_bucket: Bucket):
