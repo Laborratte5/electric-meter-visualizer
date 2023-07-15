@@ -16,3 +16,9 @@ check-typing:
 	$(PYTHON_VENV) mypy $(PYTHON_PACKAGES)/
 
 check: check-format check-import-sorting check-style check-typing
+
+# automatic code fixes
+.PHONY: fix
+fix:
+	$(PYTHON_VENV) black $(BLACK_FLAGS) $(PYTHON_PACKAGES)/
+	$(PYTHON_VENV) isort $(ISORT_FLAGS) $(PYTHON_PACKAGES)/
