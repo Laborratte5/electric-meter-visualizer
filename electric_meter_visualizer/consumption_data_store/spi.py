@@ -391,13 +391,13 @@ class DownsampleTask(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def aggregate_function_filters(self) -> set[AggregateFunction]:
+    def aggregate_function_filters(self) -> frozenset[AggregateFunction]:
         """Only data created with the given aggregate functions are downsampled by this task"""
         raise NotImplementedError
 
     @property
     @abc.abstractmethod
-    def data_sources(self) -> set[UUID]:
+    def data_sources(self) -> frozenset[UUID]:
         """Only data from the given energy_meter is downsampled by this task"""
         raise NotImplementedError
 
@@ -409,7 +409,7 @@ class DownsampleTask(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def aggregate_functions(self) -> set[AggregateFunction]:
+    def aggregate_functions(self) -> frozenset[AggregateFunction]:
         """The functions used to aggregate data inside the `aggregate_window`"""
         raise NotImplementedError
 
