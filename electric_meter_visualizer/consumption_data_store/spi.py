@@ -352,6 +352,13 @@ class DeleteRequest:
             self._source = Optional.empty()
 
 
+class DownsampleTaskAlreadyInstalledException(Exception):
+    """Exception indicating that a DownsampleTask is already installed in a ConsumptionDataStore"""
+
+    def __init__(self, task: "DownsampleTask"):
+        self.add_note(f"{task} is already installed")
+
+
 class DownsampleTask(abc.ABC):
     """A downsample task which specifies how to downsample (older) data points"""
 
