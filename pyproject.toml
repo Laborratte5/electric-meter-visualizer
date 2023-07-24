@@ -23,6 +23,9 @@ flake8 = "^6.0.0"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.isort]
+profile = "black"
+
 [tool.pylint]
 max-line-lenght = 88
 disable = ["fixme"]
