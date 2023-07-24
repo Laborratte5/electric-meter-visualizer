@@ -19,12 +19,21 @@ mypy = "^0.971"
 django-stubs = "^1.12.0"
 pylint = "^2.15.3"
 types-python-dateutil = "^2.8.19"
+isort = "^5.12.0"
+flake8 = "^6.0.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.isort]
+profile = "black"
+
 [tool.mypy]
 [[tool.mypy.overrides]]
 module = "influxdb_client.*"
 ignore_missing_imports = "True"
+
+[tool.pylint]
+max-line-lenght = 88
+disable = ["fixme"]
