@@ -354,17 +354,40 @@ class DownsampleTaskAlreadyInstalledException(Exception):
 class DownsampleTask(abc.ABC):
     """A downsample task which specifies how to downsample (older) data points"""
 
-    @property
-    @abc.abstractmethod
-    def source_bucket(self) -> Bucket:
-        """The bucket containing the data that is downsampled by this task"""
-        raise NotImplementedError
+    def __init__(
+        self,
+        source_bucket: Bucket | None = None,
+        destination_bucket: Bucket | None = None,
+    ):
+        if not (
+            (source_bucket and destination_bucket)
+            or (not source_bucket and not destination_bucket)
+        ):
+            raise ValueError(
+                "Either source_bucket and destination_bucket \
+                     must be defined or both must be undefined"
+            )
+
+        self._installed: bool = source_bucket is not None
+
+        if self._installed:
+            self._source_bucket = Optional.of(source_bucket)  # TODO optional typehints
+            self._destination_bucket = Optional.of(
+                destination_bucket
+            )  # TODO optional typehints
+        else:
+            self._source_bucket = Optional.empty()  # TODO optional typehints
+            self._destination_bucket = Optional.empty()  # TODO optional typehints
 
     @property
-    @abc.abstractmethod
-    def destination_bucket(self) -> Bucket:
+    def source_bucket(self):  # TODO optional typehints
+        """The bucket containing the data that is downsampled by this task"""
+        return self._source_bucket
+
+    @property
+    def destination_bucket(self):  # TODO optional typehints
         """The bucket where the downsampled data is stored"""
-        raise NotImplementedError
+        return self._destination_bucket
 
     @property
     @abc.abstractmethod
@@ -390,12 +413,34 @@ class DownsampleTask(abc.ABC):
         """The functions used to aggregate data inside the `aggregate_window`"""
         raise NotImplementedError
 
-    @abc.abstractmethod
-    def _install(self, source_bucket: Bucket, destination_bucket: Bucket):
+    def install(self, source_bucket: Bucket, destination_bucket: Bucket) -> None:
         """Install this DownsampleTask with the specified `source_bucket` and `destination_bucket`
 
-        Note: This method should never be called outside of the spi implementation
-              Use `set_downsample_task` of Bucket instead.
+        Args:
+            source_bucket (Bucket): Bucket containing the data that should be downsampled
+            destination_bucket (Bucket): Bucket the downsampled results will be put
+
+        Raises:
+            DownsampleTaskAlreadyInstalledException: If this DownsampleTask is already installed
+        """
+        if self._installed:
+            raise DownsampleTaskAlreadyInstalledException(self)
+
+        if source_bucket is destination_bucket:
+            raise ValueError("Destination Bucket cannot be Source Bucket")
+
+        self._install(source_bucket, destination_bucket)
+        self._installed = True
+
+        self._source_bucket = Optional.of(source_bucket)
+        self._destination_bucket = Optional.of(destination_bucket)
+
+        self.source_bucket.get().add_outbound_downsample_task(self)
+        self.destination_bucket.get().add_inbound_downsample_task(self)
+
+    @abc.abstractmethod
+    def _install(self, source_bucket: Bucket, destination_bucket: Bucket) -> None:
+        """Install this DownsampleTask with the specified `source_bucket` and `destination_bucket`
 
         Args:
             source_bucket (Bucket): Bucket containing the data that should be downsampled
@@ -403,17 +448,23 @@ class DownsampleTask(abc.ABC):
         """
         raise NotImplementedError
 
+    def uninstall(self) -> None:
+        """Uninstall this DownsampleTask between `source_bucket` and `destination_bucket`"""
+        if self._installed:
+            self._uninstall()
+            self._installed = False
+
+        if self.source_bucket.is_present():
+            self.source_bucket.get().remove_outbound_downsample_task(self)
+            self._source_bucket = Optional.empty()
+
+        if self.destination_bucket.is_present():
+            self.destination_bucket.get().remove_inbound_downsample_task(self)
+            self._destination_bucket = Optional.empty()
+
     @abc.abstractmethod
-    def _uninstall(self, source_bucket: Bucket, destination_bucket: Bucket):
-        """Uninstall this DownsampleTask between `source_bucket` and `destination_bucket`
-
-        Note: This method should never be called outside of the spi implementation
-              Use `clear_downsample_task` of Bucket instead.
-
-        Args:
-            source_bucket (Bucket): Bucket containing the data that should be downsampled
-            destination_bucket (Bucket): Bucket the downsampled results will be put
-        """
+    def _uninstall(self) -> None:
+        """Uninstall this DownsampleTask between `source_bucket` and `destination_bucket`"""
         raise NotImplementedError
 
 

@@ -31,9 +31,10 @@ profile = "black"
 
 [tool.mypy]
 [[tool.mypy.overrides]]
-module = "influxdb_client.*"
+# optional.Optional currently does not support TypeHints
+# TODO (wait for https://github.com/Python-Optional/optional.py/pull/43)
+module = ["influxdb_client.*", "optional.*"]
 ignore_missing_imports = "True"
 
 [tool.pylint]
-max-line-lenght = 88
 disable = ["fixme"]
