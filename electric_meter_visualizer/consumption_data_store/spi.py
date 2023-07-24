@@ -122,7 +122,8 @@ class Bucket(abc.ABC):
         """
         self._identifier: str = identifier
         self._retention_period: timedelta = timedelta(seconds=0)
-        self._downsample_tasks_mapping: dict["DownsampleTask", "Bucket"] = {}
+        self._inbound_downsample_tasks: set["DownsampleTask"] = set()
+        self._outbound_downsample_tasks: set["DownsampleTask"] = set()
 
     @property
     def identifier(self) -> str:
@@ -173,73 +174,64 @@ class Bucket(abc.ABC):
         raise NotImplementedError
 
     @property
-    def downsample_tasks(self) -> list["DownsampleTask"]:
-        """A list with the current DownsampleTasks
+    def inbound_downsample_tasks(self) -> frozenset["DownsampleTask"]:
+        """A frozenset with the current inbound DownsampleTasks
 
         Returns:
-            list[DownsampleTask]: An list with the current DownsampleTaks
-                                  of this bucket
+            frozenset[DownsampleTask]: A set with the current inbound
+                                       DownsampleTaks of this bucket
         """
-        return list(self._downsample_tasks_mapping.keys())
+        return frozenset(self._inbound_downsample_tasks)
 
-    def set_downsample_task(
-        self, task: "DownsampleTask", destination_bucket: "Bucket"
-    ) -> None:
-        """Add a new DownsampleTask with the given destination Bucket
-
-        If the given task is not already in this buckets task list,
-        add the task with the given destination bucket.
-        If the given task already is in this buckets task list,
-        set the desination bucket of this task to the new given
-        `destination_bucket`
-
-        Args:
-            task (DownsampleTask): The new or already exisiting DownsampleTask
-            destination_bucket (Bucket): The new destination bucket for the given
-                                         DownsampleTask
-        """
-
-        # pylint: disable=protected-access
-
-        if task in self.downsample_tasks:
-            # Remove destination for existing task
-            existing_destination: "Bucket" = self._downsample_tasks_mapping[task]
-            task._uninstall(self, existing_destination)
-
-        # Add task with new destination
-        task._install(self, destination_bucket)
-        self._downsample_tasks_mapping[task] = destination_bucket
-
-    def remove_downsample_task(self, task: "DownsampleTask") -> None:
-        """Remove the given DownsampleTask from this bucket
-
-        If the given DownsampleTaks does not exist in this Bucket
-        this method does not change anything.
-
-        Args:
-            task (DownsampleTask): The DownsampleTask that should be removed
-        """
-        self._downsample_tasks_mapping.pop(task, None)
-
-    def get_dowsample_task_destination(
-        self, task: "DownsampleTask"
-    ):  # TODO optional.Optional currently does not support TypeHints
-        # (wait for https://github.com/Python-Optional/optional.py/pull/43)
-        """Return an Optional with the given DownsampelTasks destination Bucket
-
-        Args:
-            task (DownsampleTask): The task of which the destination Bucket
-                                   should be returned
+    @property
+    def outbound_downsample_tasks(self) -> frozenset["DownsampleTask"]:
+        """A frozenset with the current outbound DownsampleTasks
 
         Returns:
-            Optional: Containing the destination Bucket if the given DownsampleTask
-                      was added to this Bucket or an empty Optional if the given task
-                      never was added to this Bucket
+            frozenset[DownsampleTask]: A set with the current outbound
+                                       DownsampleTaks of this bucket
         """
+        return frozenset(self._outbound_downsample_tasks)
 
-        if task in self.downsample_tasks:
-            return Optional.of(self._downsample_tasks_mapping[task])
-        return Optional.empty()
+    def add_inbound_downsample_task(self, task: "DownsampleTask") -> None:
+        """Adds a DownsampleTask to this Buckets inbound downsample task list
+
+        Note: This method is called automatically when installing a DownsampleTask
+
+        Args:
+            task (DownsampleTask): The DownsampleTask that puts data into this Bucket
+        """
+        self._inbound_downsample_tasks.add(task)
+
+    def remove_inbound_downsample_task(self, task: "DownsampleTask") -> None:
+        """Removes a DownsampleTask from this Buckets inbound downsample task list
+
+        Note: This method is called automatically when uninstalling a DownsampleTask
+
+        Args:
+            task (DownsampleTask): The DownsampleTask that puts data into this Bucket
+        """
+        self._inbound_downsample_tasks.remove(task)
+
+    def add_outbound_downsample_task(self, task: "DownsampleTask") -> None:
+        """Adds a DownsampleTask to this Buckets outbound downsample task list
+
+        Note: This method is called automatically when installing a DownsampleTask
+
+        Args:
+            task (DownsampleTask): The DownsampleTask that takes data from this Bucket
+        """
+        self._outbound_downsample_tasks.add(task)
+
+    def remove_outbound_downsample_task(self, task: "DownsampleTask") -> None:
+        """Removes a DownsampleTask from this Buckets outbound downsample task list
+
+        Note: This method is called automatically when uninstalling a DownsampleTask
+
+        Args:
+            task (DownsampleTask): The DownsampleTask that puts data into this Bucket
+        """
+        self._outbound_downsample_tasks.remove(task)
 
 
 class QueryBuilder(FilterBuilder):
