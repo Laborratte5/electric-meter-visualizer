@@ -1,0 +1,6 @@
+customAggregateWindow = (every, fn, column="_value", timeSrc="_stop", timeDst="_time", tables=<-) =>
+    tables
+        |> window(every: every)
+        |> fn()
+        |> duplicate(column: timeSrc, as: timeDst)
+        |> group()
