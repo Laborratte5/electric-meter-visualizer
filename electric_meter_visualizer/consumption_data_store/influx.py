@@ -29,10 +29,6 @@ AGGREGATE_MAPPING: dict[spi.AggregateFunction, str] = {
     spi.AggregateFunction.RAW: "raw",
 }
 
-REVERSE_AGGREGATE_MAPPING: dict[str, spi.AggregateFunction] = {
-    name: function for function, name in AGGREGATE_MAPPING.items()
-}
-
 
 class InfluxFilterBuilder(spi.FilterBuilder):
     """Builder to create simple filters in flux"""
@@ -108,9 +104,14 @@ class InfluxQuery(spi.Query):
         """
         datapoints: list[spi.Datapoint] = []
 
+        logger.debug(self.query)
+        logger.debug(self.query_parameter)
+
         result: flux_table.TableList = self.query_api.query(
             self.query, self.organisation, self.query_parameter
         )
+
+        logger.debug(result)
 
         for table in result:
             for record in table.records:
@@ -229,7 +230,8 @@ class InfluxQueryBuilder(spi.QueryBuilder):
             and len(aggregate_functions) > 1
         ):
             raise ValueError(
-                "AggregateFunction.RAW cannot be used in conjunction with other AggregateFunctions"
+                "AggregateFunction.RAW cannot be used in conjunction \
+                 with other AggregateFunctions"
             )
 
         if len(aggregate_functions) == 0:
@@ -447,7 +449,9 @@ class InfluxConsumptionDataStore(spi.ConsumptionDataStore):
         )
         self.bucket_api: influx_bucket_api.BucketsApi = self.influx_client.buckets_api()
         self.query_api: influx_query_api.QueryApi = self.influx_client.query_api()
-        self.write_api: influx_write_api.WriteApi = self.influx_client.write_api()
+        self.write_api: influx_write_api.WriteApi = self.influx_client.write_api(
+            write_options=influx_write_api.SYNCHRONOUS
+        )
         self.organisation = organisation
 
         # Set default_buckets to all buckets
@@ -485,6 +489,8 @@ class InfluxConsumptionDataStore(spi.ConsumptionDataStore):
 
         if request.aggregate_function.is_present():
             predicate += f'aggregate_function="{request.aggregate_function.get().name}"'
+
+        logger.debug("Delete Predicate: %s", predicate)
 
         delete_api.delete(
             request.start_date,
