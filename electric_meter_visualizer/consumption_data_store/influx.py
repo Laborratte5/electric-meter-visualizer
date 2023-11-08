@@ -1,16 +1,20 @@
 """This module is a concrete implementation of the spi module based on InfluxDB
 """
-# pylint: disable=fixme
-from uuid import UUID
-from datetime import datetime
-from datetime import timedelta
+
 import logging
+from datetime import datetime, timedelta
+from uuid import UUID
+
 import influxdb_client
-from influxdb_client.client import flux_table
-import influxdb_client.domain as influx_domain
-import influxdb_client.client.query_api as influx_query_api
-import influxdb_client.client.write_api as influx_write_api
 import influxdb_client.client.bucket_api as influx_bucket_api
+import influxdb_client.client.query_api as influx_query_api
+import influxdb_client.client.tasks_api as influx_task_api
+import influxdb_client.client.write_api as influx_write_api
+import influxdb_client.domain as influx_domain
+from influxdb_client.client import flux_table
+from jinja2 import Environment, PackageLoader
+from optional import Optional
+
 from electric_meter_visualizer.consumption_data_store import spi
 
 logger = logging.getLogger(__name__)
@@ -314,6 +318,121 @@ class InfluxQueryBuilder(spi.QueryBuilder):
             query_parameters["_aggregate_window"] = aggregate_window
 
         return InfluxQuery(self.query_api, query, query_parameters, self.organisation)
+
+
+class InfluxDownsampleTask(spi.DownsampleTask):
+    """Representation of a DownsampleTask to downsample (older) data points"""
+
+    def __init__(
+        self,
+        aggregate_window: timedelta,
+        aggregate_functions: list[spi.AggregateFunction],
+        tasks_api: influx_task_api.TasksApi,
+        organization: influx_domain.Organization,
+        data_sources: list[UUID] | None = None,
+        aggregate_function_filters: list[spi.AggregateFunction] | None = None,
+        source_bucket: spi.Bucket | None = None,
+        destination_bucket: spi.Bucket | None = None,
+    ) -> None:
+        # pylint: disable=too-many-arguments
+        super().__init__(
+            source_bucket=source_bucket, destination_bucket=destination_bucket
+        )
+        self._aggregate_window: timedelta = aggregate_window
+        self._aggregate_functions: list[spi.AggregateFunction] = aggregate_functions
+        self._tasks_api: influx_task_api.TasksApi = tasks_api
+        self._organization: influx_domain.Organization = organization
+
+        self._task_id: str = ""
+
+        if data_sources is None:
+            self._data_sources = Optional.empty()
+        else:
+            self._data_sources = Optional.of(frozenset(data_sources))
+
+        if aggregate_function_filters is None:
+            self._aggregate_function_filters = Optional.empty()
+        else:
+            self._aggregate_function_filters = Optional.of(
+                frozenset(aggregate_function_filters)
+            )
+
+    @property
+    def aggregate_function_filters(self):  # TODO Optional typehint
+        """Only data created with the given aggregate functions
+        are downsampled by this task
+        """
+        return self._aggregate_function_filters
+
+    @property
+    def data_sources(self):  # TODO Optional typehint
+        """Only data from the given energy_meter is downsampled by this task
+
+        Note: An empty optional means that all datasources are downsampled
+        """
+        return self._data_sources
+
+    @property
+    def aggregate_window(self) -> timedelta:
+        """The time window in which data is aggregated
+        using the `aggregate_functions`
+        """
+        return self._aggregate_window
+
+    @property
+    def aggregate_functions(self) -> frozenset[spi.AggregateFunction]:
+        """The functions used to aggregate data inside the `aggregate_window`"""
+        return frozenset(self._aggregate_functions)
+
+    def _install(self, source_bucket: spi.Bucket, destination_bucket: spi.Bucket):
+        task_name: str = "TestTaskName"  # TODO
+
+        filter_builder: InfluxFilterBuilder = InfluxFilterBuilder()
+        self.data_sources.if_present(filter_builder.filter_source)
+        self.aggregate_function_filters.if_present(
+            filter_builder.filter_aggregate_function
+        )
+
+        env: Environment = Environment(
+            loader=PackageLoader(
+                "electric_meter_visualizer.consumption_data_store",
+                "influx_query_templates",
+            )
+        )
+        template = env.get_template("downsample_task.j2")
+
+        flux_script: str = template.render(
+            source_bucket=source_bucket,
+            every=self._aggregate_window,
+            filter=filter_builder.build(),
+            aggregate_function_mapping=AGGREGATE_MAPPING,
+            aggregate_functions=self._aggregate_functions,
+            aggregate_function_names=set(
+                map(AGGREGATE_MAPPING.__getitem__, self._aggregate_functions)
+            ),
+            aggregate_window=self._aggregate_window,
+            destination_bucket=destination_bucket,
+        )
+
+        logger.debug("Downsample Task:\n%s", flux_script)
+
+        # TODO save bucket-task mapping to json file
+
+        task: influxdb_client.Task = self._tasks_api.create_task_every(
+            task_name,
+            flux_script,
+            str(self._aggregate_window.seconds) + "s",
+            self._organization,
+        )
+        self._task_id = task.id
+        # TODO ggf update bucket-task mapping (task id o.ä.)
+
+    def _uninstall(self):
+        if self._task_id is not None:
+            self._tasks_api.delete_task(self._task_id)
+            self._task_id = ""
+
+        # TODO remove bucket-task mapping from json file
 
 
 class InfluxConsumptionDataStore(spi.ConsumptionDataStore):
