@@ -387,7 +387,9 @@ class InfluxDownsampleTask(spi.DownsampleTask):
         return frozenset(self._aggregate_functions)
 
     def _install(self, source_bucket: spi.Bucket, destination_bucket: spi.Bucket):
-        task_name: str = "TestTaskName"  # TODO
+        task_name: str = (
+            f"downsample-{source_bucket.identifier}-to-{destination_bucket.identifier}"
+        )
 
         filter_builder: InfluxFilterBuilder = InfluxFilterBuilder()
         self.data_sources.if_present(filter_builder.filter_source)
