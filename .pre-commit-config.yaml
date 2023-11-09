@@ -13,7 +13,11 @@ repos:
     rev: 1.5.1
     hooks:
       - id: poetry-check
+        stages:
+          - "pre-merge-commit"
       - id: poetry-lock
+        stages:
+          - "pre-merge-commit"
 
   - repo: https://github.com/psf/black
     rev: 22.8.0
