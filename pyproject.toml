@@ -30,6 +30,9 @@ build-backend = "poetry.core.masonry.api"
 [tool.isort]
 profile = "black"
 
+[flake8]
+max-line-length = 89
+
 [tool.mypy]
 [[tool.mypy.overrides]]
 # optional.Optional currently does not support TypeHints
