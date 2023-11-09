@@ -2,6 +2,7 @@
 """
 
 import logging
+import typing
 from datetime import datetime, timedelta
 from uuid import UUID
 
@@ -322,8 +323,103 @@ class InfluxQueryBuilder(spi.QueryBuilder):
         return InfluxQuery(self.query_api, query, query_parameters, self.organisation)
 
 
+class DownsampleTaskMapper:
+    """Class to manage mapping between downsample
+    task id and downsample task information"""
+
+    def add_downsample_task(
+        self,
+        task: "InfluxDownsampleTask",
+        organization_id: str,
+        source_bucket_id: str,
+        destination_bucket_id: str,
+    ):
+        """Add the given downsample task as 'not installed'
+        to the list of downsample taks
+
+        Args:
+            task (InfluxDownsampleTask): The task to add to the mapping
+            organization_id (str): Id of the organization the task belongs to
+            source_bucket_id (str): The source bucket id for of task
+            destination_bucket_id (str): The destination bucket id for the task
+        """
+        logger.debug(
+            "Save downsample taks: %s",
+            self._downsample_task_to_json(
+                task, organization_id, source_bucket_id, destination_bucket_id
+            ),
+        )
+        # TODO implement
+        raise NotImplementedError
+
+    def set_task_id(
+        self,
+        task_id: str,
+        task: "InfluxDownsampleTask",
+        organization_id: str,
+        source_bucket_id: str,
+        destination_bucket_id: str,
+    ):
+        """Sets the task_id for a bucket in the 'not installed' list
+
+        Setting the task id of a 'not installed' task changes the state
+        of this task to installed
+
+        Args:
+            task_id (str): The id of the given task
+            task (InfluxDownsampleTask): The task to change to installed
+            organization_id (str): Id of the organization the task belongs to
+            source_bucket_id (str): The source bucket id for of task
+            destination_bucket_id (str): The destination bucket id for the task
+        """
+        # pylint: disable=too-many-arguments
+
+        logger.debug(
+            "Set task %s: %s",
+            task_id,
+            self._downsample_task_to_json(
+                task, organization_id, source_bucket_id, destination_bucket_id
+            ),
+        )
+        # TODO implement
+        raise NotImplementedError
+
+    def remove_downsample_task(self, task_id: str):
+        """Removes information about a installed downsample task
+
+        Args:
+            task_id (str): the id of the downsample task to remove
+        """
+        logger.debug("Remove downsample taks %s", task_id)
+        # TODO implement
+        raise NotImplementedError
+
+    def _downsample_task_to_json(
+        self,
+        task: "InfluxDownsampleTask",
+        organization_id: str,
+        source_bucket_id: str,
+        destination_bucket_id: str,
+    ) -> dict[str, typing.Any]:
+        return {
+            "aggergate_window": task.aggregate_window.seconds,
+            "aggregate_functions": list(
+                map(lambda func: func.name, task.aggregate_functions)
+            ),
+            "organization_id": organization_id,
+            "data_sources": task.data_sources.get_or_default([]),
+            "aggregate_function_filters": task.aggregate_function_filters.get_or_default(
+                []
+            ),
+            "source_bucket": source_bucket_id,
+            "destination_bucket": destination_bucket_id,
+        }
+
+
 class InfluxDownsampleTask(spi.DownsampleTask):
     """Representation of a DownsampleTask to downsample (older) data points"""
+
+    # pylint: disable=too-many-instance-attributes
 
     def __init__(
         self,
@@ -331,12 +427,15 @@ class InfluxDownsampleTask(spi.DownsampleTask):
         aggregate_functions: list[spi.AggregateFunction],
         tasks_api: influx_task_api.TasksApi,
         organization: influx_domain.Organization,
+        downsample_task_mapper: DownsampleTaskMapper,
+        task_id: str = "",
         data_sources: list[UUID] | None = None,
         aggregate_function_filters: list[spi.AggregateFunction] | None = None,
         source_bucket: spi.Bucket | None = None,
         destination_bucket: spi.Bucket | None = None,
     ) -> None:
         # pylint: disable=too-many-arguments
+
         super().__init__(
             source_bucket=source_bucket, destination_bucket=destination_bucket
         )
@@ -344,8 +443,9 @@ class InfluxDownsampleTask(spi.DownsampleTask):
         self._aggregate_functions: list[spi.AggregateFunction] = aggregate_functions
         self._tasks_api: influx_task_api.TasksApi = tasks_api
         self._organization: influx_domain.Organization = organization
+        self._downsample_task_mapper: DownsampleTaskMapper = downsample_task_mapper
 
-        self._task_id: str = ""
+        self._task_id: str = task_id
 
         if data_sources is None:
             self._data_sources = Optional.empty()
@@ -420,7 +520,12 @@ class InfluxDownsampleTask(spi.DownsampleTask):
 
         logger.debug("Downsample Task:\n%s", flux_script)
 
-        # TODO save bucket-task mapping to json file
+        self._downsample_task_mapper.add_downsample_task(
+            self,
+            self._organization.id,
+            source_bucket.identifier,
+            destination_bucket.identifier,
+        )
 
         task: influxdb_client.Task = self._tasks_api.create_task_every(
             task_name,
@@ -429,14 +534,20 @@ class InfluxDownsampleTask(spi.DownsampleTask):
             self._organization,
         )
         self._task_id = task.id
-        # TODO ggf update bucket-task mapping (task id o.ä.)
+
+        self._downsample_task_mapper.set_task_id(
+            task.id,
+            self,
+            self._organization.id,
+            source_bucket.identifier,
+            destination_bucket.identifier,
+        )
 
     def _uninstall(self):
         if self._task_id is not None:
             self._tasks_api.delete_task(self._task_id)
+            self._downsample_task_mapper.remove_downsample_task(self._task_id)
             self._task_id = ""
-
-        # TODO remove bucket-task mapping from json file
 
 
 class InfluxConsumptionDataStore(spi.ConsumptionDataStore):
