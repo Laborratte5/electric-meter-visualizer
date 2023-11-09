@@ -8,10 +8,12 @@ data = from(bucketID: "{{source_bucket.identifier}}")
     |> group(columns: ["_measurement"]) {# Creates a separate table for each _measurement #}
 
 {% for aggregate_function in aggregate_functions %}
-{{aggregate_function_mapping[aggregate_function]}} = data |> customAggregateWindow(every: _aggregate_window, fn: {{aggregate_function_mapping[aggregate_function]}})
-    |> map(fn: (r) => ({{ '{r with _value: float(v: r._value)}' }}))
-    |> set(key: "_field", value: "{{aggregate_function_mapping[aggregate_function]}}")
-    |> set(key: "aggregate_function", value: "{{aggregate_function.name}}")
+{{aggregate_function_mapping[aggregate_function]}} =
+    data
+        |> customAggregateWindow(every: {{aggregate_window.seconds}}s, fn: {{aggregate_function_mapping[aggregate_function]}})
+        |> map(fn: (r) => ({{ '{r with _value: float(v: r._value)}' }}))
+        |> set(key: "_field", value: "consumption")
+        |> set(key: "aggregate_function", value: "{{aggregate_function.name}}")
 {% endfor %}
 
 union(tables: [{{ aggregate_function_names | join(',') }}])
