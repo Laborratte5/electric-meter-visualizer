@@ -1,9 +1,7 @@
-option task = {{ '{name: "' + task_name + '", every: ' + every.seconds | string + 's, offset: ' + task_offset.seconds | string + 's}' }}
-
 {% include "custom_aggregate_window.j2" %}
 
 data = from(bucketID: "{{source_bucket.identifier}}")
-    |> range(start: -task.every)
+    |> range(start: -{{every.seconds}}s)
     {{filter}}
     |> group(columns: ["_measurement"]) {# Creates a separate table for each _measurement #}
 
