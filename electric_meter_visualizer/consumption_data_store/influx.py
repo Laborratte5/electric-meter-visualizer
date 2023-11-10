@@ -1,6 +1,7 @@
 """This module is a concrete implementation of the spi module based on InfluxDB
 """
 
+import json
 import logging
 import typing
 from datetime import datetime, timedelta
@@ -327,6 +328,11 @@ class DownsampleTaskMapper:
     """Class to manage mapping between downsample
     task id and downsample task information"""
 
+    def __init__(self, file_path: str) -> None:
+        self._file_path: str = file_path
+        self._not_installed_tasks: list[dict[str, typing.Any]] = []
+        self._installed_tasks: dict[str, dict[str, typing.Any]] = {}
+
     def add_downsample_task(
         self,
         task: "InfluxDownsampleTask",
@@ -343,14 +349,12 @@ class DownsampleTaskMapper:
             source_bucket_id (str): The source bucket id for of task
             destination_bucket_id (str): The destination bucket id for the task
         """
-        logger.debug(
-            "Save downsample taks: %s",
-            self._downsample_task_to_json(
-                task, organization_id, source_bucket_id, destination_bucket_id
-            ),
+
+        task_dict: dict[str, typing.Any] = self._downsample_task_to_dict(
+            task, organization_id, source_bucket_id, destination_bucket_id
         )
-        # TODO implement
-        raise NotImplementedError
+        self._not_installed_tasks.append(task_dict)
+        self._save()
 
     def set_task_id(
         self,
@@ -374,15 +378,12 @@ class DownsampleTaskMapper:
         """
         # pylint: disable=too-many-arguments
 
-        logger.debug(
-            "Set task %s: %s",
-            task_id,
-            self._downsample_task_to_json(
-                task, organization_id, source_bucket_id, destination_bucket_id
-            ),
+        task_dict: dict[str, typing.Any] = self._downsample_task_to_dict(
+            task, organization_id, source_bucket_id, destination_bucket_id
         )
-        # TODO implement
-        raise NotImplementedError
+        self._not_installed_tasks.remove(task_dict)
+        self._installed_tasks[task_id] = task_dict
+        self._save()
 
     def remove_downsample_task(self, task_id: str):
         """Removes information about a installed downsample task
@@ -391,10 +392,11 @@ class DownsampleTaskMapper:
             task_id (str): the id of the downsample task to remove
         """
         logger.debug("Remove downsample taks %s", task_id)
-        # TODO implement
-        raise NotImplementedError
 
-    def _downsample_task_to_json(
+        del self._installed_tasks[task_id]
+        self._save()
+
+    def _downsample_task_to_dict(
         self,
         task: "InfluxDownsampleTask",
         organization_id: str,
@@ -402,18 +404,31 @@ class DownsampleTaskMapper:
         destination_bucket_id: str,
     ) -> dict[str, typing.Any]:
         return {
-            "aggergate_window": task.aggregate_window.seconds,
+            "aggergate_window": int(task.aggregate_window.total_seconds()),
             "aggregate_functions": list(
                 map(lambda func: func.name, task.aggregate_functions)
             ),
             "organization_id": organization_id,
-            "data_sources": task.data_sources.get_or_default([]),
-            "aggregate_function_filters": task.aggregate_function_filters.get_or_default(
-                []
+            "data_sources": list(map(str, task.data_sources.get_or_default([]))),
+            "aggregate_function_filters": list(
+                map(
+                    lambda func: func.name,
+                    task.aggregate_function_filters.get_or_default([]),
+                )
             ),
             "source_bucket": source_bucket_id,
             "destination_bucket": destination_bucket_id,
         }
+
+    def _save(self):
+        logger.debug("Save downsample mapping")
+        downsample_task_mapping_json: dict[str, typing.Any] = {
+            "not_installed": self._not_installed_tasks,
+            "installed_tasks": self._installed_tasks,
+        }
+
+        with open(self._file_path, "w", encoding="utf-8") as file:
+            json.dump(downsample_task_mapping_json, file)
 
 
 class InfluxDownsampleTask(spi.DownsampleTask):
