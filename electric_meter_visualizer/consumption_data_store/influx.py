@@ -545,7 +545,7 @@ class InfluxDownsampleTask(spi.DownsampleTask):
         task: influxdb_client.Task = self._tasks_api.create_task_every(
             task_name,
             flux_script,
-            str(self._aggregate_window.seconds) + "s",
+            str(int(self._aggregate_window.total_seconds())) + "s",
             self._organization,
         )
         self._task_id = task.id
