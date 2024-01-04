@@ -90,13 +90,13 @@ class InfluxQuery(spi.Query):
         query_api: influx_query_api.QueryApi,
         query: str,
         query_parameter: dict[str, object],
-        organisation: str,
+        organisation: influx_domain.Organization,
     ):
         """Create a new Query for an InfluxConsumptionDataStore"""
         self.query_api: influx_query_api.QueryApi = query_api
         self.query: str = query
         self.query_parameter: dict[str, object] = query_parameter
-        self.organisation: str = organisation
+        self.organisation: influx_domain.Organization = organisation
 
     def execute(self) -> list[spi.Datapoint]:
         """Execute this query
@@ -186,7 +186,7 @@ class InfluxQueryBuilder(spi.QueryBuilder):
     def __init__(
         self,
         query_api: influx_query_api.QueryApi,
-        organisation: str,
+        organisation: influx_domain.Organization,
         default_buckets: set[spi.Bucket],
     ):
         self.query_api: influx_query_api.QueryApi = query_api
@@ -195,7 +195,7 @@ class InfluxQueryBuilder(spi.QueryBuilder):
         self._filter_builder: InfluxFilterBuilder = InfluxFilterBuilder()
         self._start_date: object = timedelta(days=0)
         self._stop_date: object = datetime.now()
-        self.organisation: str = organisation
+        self.organisation: influx_domain.Organization = organisation
 
     def filter_bucket(self, bucket_list: set[spi.Bucket]) -> spi.QueryBuilder:
         self._buckets = bucket_list
