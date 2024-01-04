@@ -150,6 +150,7 @@ class InfluxBucket(spi.Bucket):
         super().__init__(bucket.id)
         self._bucket_api: influx_bucket_api.BucketsApi = bucket_api
         self._bucket: influx_domain.Bucket = bucket
+        self._name = bucket.name
 
         # Set retention period
         retention_rule_list: list[
@@ -160,6 +161,10 @@ class InfluxBucket(spi.Bucket):
             self._retention_period = timedelta(seconds=int(retetion_rule.every_seconds))
 
         # TODO set existing downsample tasks with this bucket as source
+
+    def _set_name(self, name: str) -> None:
+        self._bucket.name = name
+        self._bucket_api.update_bucket(self._bucket)
 
     def _set_retention_period(self, retention_period: timedelta) -> None:
         every_seconds: int = int(retention_period.total_seconds())
