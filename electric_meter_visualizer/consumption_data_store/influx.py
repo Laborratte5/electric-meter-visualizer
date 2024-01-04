@@ -565,6 +565,59 @@ class InfluxDownsampleTask(spi.DownsampleTask):
             self._task_id = ""
 
 
+class InfuxDownsampleTaskBuilder(spi.DownsampleTaskBuilder):
+    """Create InfluxDownsampleTaks"""
+
+    def __init__(
+        self,
+        tasks_api: influx_task_api.TasksApi,
+        organization: influx_domain.Organization,
+        downsample_task_mapper: DownsampleTaskMapper,
+    ) -> None:
+        super().__init__()
+        self._tasks_api = tasks_api
+        self._organization = organization
+        self._downsample_task_mapper = downsample_task_mapper
+
+        self._optional_filters: dict[str, typing.Any] = {}
+
+    def filter_aggregate_function(
+        self, aggregate_function_list: set[spi.AggregateFunction]
+    ) -> spi.DownsampleTaskBuilder:
+        self._optional_filters["aggregate_function_filters"] = aggregate_function_list
+        return self
+
+    def filter_source(self, id_list: set[UUID]) -> spi.DownsampleTaskBuilder:
+        self._optional_filters["data_sources"] = id_list
+        return self
+
+    def build(
+        self,
+        aggregate_window: timedelta,
+        aggregate_functions: set[spi.AggregateFunction],
+    ) -> InfluxDownsampleTask:
+        """Create the DownsampleTask specified with this builder object
+
+        Args:
+            aggregate_window (timedelta): time window in which data is aggregated
+                                          using the AggregateFunctions
+            aggregate_functions (set[AggregateFunction]): `AggregateFunction`s
+                    which are used to aggregate the data of each aggregate_window
+
+        Returns:
+            DownsampleTask: The DownsampleTask this builder was configured to build
+        """
+
+        return InfluxDownsampleTask(
+            aggregate_window,
+            list(aggregate_functions),
+            self._tasks_api,
+            self._organization,
+            self._downsample_task_mapper,
+            **self._optional_filters,
+        )
+
+
 class InfluxConsumptionDataStore(spi.ConsumptionDataStore):
     """
     This class implements the ConsumptionDataStore backed by an InfluxDatabase
