@@ -1,14 +1,14 @@
 {% include "custom_aggregate_window.j2" %}
 
 data = from(bucketID: "{{source_bucket.identifier}}")
-    |> range(start: -{{every.seconds}}s)
+    |> range(start: -{{ every.total_seconds() | int }}s)
     {{filter}}
     |> group(columns: ["_measurement"]) {# Creates a separate table for each _measurement #}
 
 {% for aggregate_function in aggregate_functions %}
 {{aggregate_function_mapping[aggregate_function]}} =
     data
-        |> customAggregateWindow(every: {{aggregate_window.seconds}}s, fn: {{aggregate_function_mapping[aggregate_function]}})
+        |> customAggregateWindow(every: {{ aggregate_window.total_seconds() | int }}s, fn: {{aggregate_function_mapping[aggregate_function]}})
         |> map(fn: (r) => ({{ '{r with _value: float(v: r._value)}' }}))
         |> set(key: "_field", value: "consumption")
         |> set(key: "aggregate_function", value: "{{aggregate_function.name}}")
