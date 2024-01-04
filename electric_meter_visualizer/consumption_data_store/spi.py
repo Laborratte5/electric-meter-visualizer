@@ -484,7 +484,7 @@ class DownsampleTaskBuilder(FilterBuilder):
     @abc.abstractmethod
     def build(
         self, aggregate_window: timedelta, aggregate_functions: set[AggregateFunction]
-    ) -> None:
+    ) -> DownsampleTask:
         """Create the DownsampleTask specified with this builder object
 
         Args:
@@ -492,6 +492,9 @@ class DownsampleTaskBuilder(FilterBuilder):
                                           using the AggregateFunctions
             aggregate_functions (set[AggregateFunction]): `AggregateFunction`s
                     which are used to aggregate the data of each aggregate_window
+
+        Returns:
+            DownsampleTask: The DownsampleTask this builder was configured to build
         """
         raise NotImplementedError
 
