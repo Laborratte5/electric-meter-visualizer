@@ -121,6 +121,7 @@ class Bucket(abc.ABC):
                               in the ConsumptionDataStore
         """
         self._identifier: str = identifier
+        self._name: str = ""
         self._retention_period: timedelta = timedelta(seconds=0)
         self._inbound_downsample_tasks: set["DownsampleTask"] = set()
         self._outbound_downsample_tasks: set["DownsampleTask"] = set()
@@ -133,6 +134,39 @@ class Bucket(abc.ABC):
             str: The unique identifier of this Bucket
         """
         return self._identifier
+
+    @property
+    def name(self) -> str:
+        """A string to identifiy this Bucket in the ConsumptionDataStore
+
+        Note: The name may not be unique
+
+        Returns:
+            str: The name of this bucket
+        """
+        return self._name
+
+    @name.setter
+    def name(self, name: str) -> None:
+        """Set the name of this Bucket
+
+        Args:
+            name (str): The name of this Bucket
+        """
+        self._set_name(name)
+        self._name = name
+
+    @abc.abstractmethod
+    def _set_name(self, name: str) -> None:
+        """Sets the new name of this bucket
+
+        Implementors of this spi should use this method to update
+        the bucket name in the persistent storage.
+
+        Args:
+            name (str): The new name of this bucket
+        """
+        raise NotImplementedError
 
     @property
     def retention_period(self) -> timedelta:
