@@ -687,8 +687,7 @@ class InfluxConsumptionDataStore(spi.ConsumptionDataStore):
         )
 
     def delete_bucket(self, bucket: spi.Bucket):
-        # TODO implement
-        pass
+        self.bucket_api.delete_bucket(bucket.identifier)
 
     def close(self):
         self.write_api.close()
