@@ -650,7 +650,6 @@ class InfluxConsumptionDataStore(spi.ConsumptionDataStore):
         )[
             0
         ]  # TODO org erstellen, falls sie nicht existiert
-        self._org_id = self._organisation.id
 
         self._downsample_taks_mapper: DownsampleTaskMapper = downsample_task_mapper
 
@@ -675,7 +674,7 @@ class InfluxConsumptionDataStore(spi.ConsumptionDataStore):
             .time(datapoint.timestamp)
         )
 
-        self.write_api.write(bucket.identifier, self._org_id, point)
+        self.write_api.write(bucket.identifier, self._organisation.id, point)
 
     def delete_data(self, request: spi.DeleteRequest):
         delete_api: influxdb_client.DeleteApi = self.influx_client.delete_api()
