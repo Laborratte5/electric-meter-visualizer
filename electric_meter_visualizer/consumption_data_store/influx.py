@@ -628,7 +628,13 @@ class InfluxConsumptionDataStore(spi.ConsumptionDataStore):
     This class implements the ConsumptionDataStore backed by an InfluxDatabase
     """
 
-    def __init__(self, url: str, token: str, organisation: str):
+    def __init__(
+        self,
+        url: str,
+        token: str,
+        organisation: str,
+        downsample_task_mapper: DownsampleTaskMapper,
+    ):
         super().__init__()
         self.influx_client: influxdb_client.InfluxDBClient = (
             influxdb_client.InfluxDBClient(url=url, token=token, org=organisation)
@@ -646,11 +652,19 @@ class InfluxConsumptionDataStore(spi.ConsumptionDataStore):
         ]  # TODO org erstellen, falls sie nicht existiert
         self._org_id = self._organisation.id
 
+        self._downsample_taks_mapper: DownsampleTaskMapper = downsample_task_mapper
+
     def create_query(self) -> spi.QueryBuilder:
         return InfluxQueryBuilder(
             self.query_api,
             self._organisation,
             set(self.buckets),
+        )
+
+    def create_downsample_task(self) -> spi.DownsampleTaskBuilder:
+        task_api: influx_task_api.TasksApi = self.influx_client.tasks_api()
+        return InfuxDownsampleTaskBuilder(
+            task_api, self._organisation, self._downsample_taks_mapper
         )
 
     def put_data(self, datapoint: spi.Datapoint, bucket: spi.Bucket):
