@@ -655,7 +655,7 @@ class InfluxConsumptionDataStore(spi.ConsumptionDataStore):
 
     def put_data(self, datapoint: spi.Datapoint, bucket: spi.Bucket):
         point: influxdb_client.Point = (
-            influxdb_client.Point(datapoint.source)
+            influxdb_client.Point(str(datapoint.source))
             .field("consumption", datapoint.value)
             .tag("aggregate_function", datapoint.aggregate_function.name)
             .time(datapoint.timestamp)
