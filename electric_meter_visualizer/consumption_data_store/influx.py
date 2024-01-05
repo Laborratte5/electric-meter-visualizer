@@ -638,19 +638,19 @@ class InfluxConsumptionDataStore(spi.ConsumptionDataStore):
         self.write_api: influx_write_api.WriteApi = self.influx_client.write_api(
             write_options=influx_write_api.SYNCHRONOUS
         )
-        self.organisation = organisation
-
-        # Set default_buckets to all buckets
-        # This may lead to missing buckets due to pagination
-        # https://influxdb-client.readthedocs.io/en/latest/api.html#influxdb_client.BucketsApi.find_buckets
-        self.default_buckets: set[spi.Bucket] = {
-            InfluxBucket(self.bucket_api, influx_bucket)
-            for influx_bucket in self.bucket_api.find_buckets(org=organisation)
-        }
+        org_api = self.influx_client.organizations_api()
+        self._organisation: influx_domain.Organization = org_api.find_organizations(
+            org=organisation
+        )[
+            0
+        ]  # TODO org erstellen, falls sie nicht existiert
+        self._org_id = self._organisation.id
 
     def create_query(self) -> spi.QueryBuilder:
         return InfluxQueryBuilder(
-            self.query_api, self.organisation, self.default_buckets
+            self.query_api,
+            self._organisation,
+            set(self.buckets),
         )
 
     def put_data(self, datapoint: spi.Datapoint, bucket: spi.Bucket):
@@ -661,7 +661,7 @@ class InfluxConsumptionDataStore(spi.ConsumptionDataStore):
             .time(datapoint.timestamp)
         )
 
-        self.write_api.write(bucket.identifier, self.organisation, point)
+        self.write_api.write(bucket.identifier, self._org_id, point)
 
     def delete_data(self, request: spi.DeleteRequest):
         delete_api: influxdb_client.DeleteApi = self.influx_client.delete_api()
@@ -683,7 +683,7 @@ class InfluxConsumptionDataStore(spi.ConsumptionDataStore):
             request.stop_date,
             predicate,
             request.bucket.identifier,
-            self.organisation,
+            self._organisation,
         )
 
     def delete_bucket(self, bucket: spi.Bucket):
