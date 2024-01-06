@@ -341,7 +341,6 @@ class DownsampleTaskMapper:
     def add_downsample_task(
         self,
         task: "InfluxDownsampleTask",
-        organization_id: str,
         source_bucket_id: str,
         destination_bucket_id: str,
     ):
@@ -356,7 +355,7 @@ class DownsampleTaskMapper:
         """
 
         task_dict: dict[str, typing.Any] = self._downsample_task_to_dict(
-            task, organization_id, source_bucket_id, destination_bucket_id
+            task, source_bucket_id, destination_bucket_id
         )
         self._not_installed_tasks.append(task_dict)
         self._save()
@@ -365,7 +364,6 @@ class DownsampleTaskMapper:
         self,
         task_id: str,
         task: "InfluxDownsampleTask",
-        organization_id: str,
         source_bucket_id: str,
         destination_bucket_id: str,
     ):
@@ -384,7 +382,7 @@ class DownsampleTaskMapper:
         # pylint: disable=too-many-arguments
 
         task_dict: dict[str, typing.Any] = self._downsample_task_to_dict(
-            task, organization_id, source_bucket_id, destination_bucket_id
+            task, source_bucket_id, destination_bucket_id
         )
         self._not_installed_tasks.remove(task_dict)
         self._installed_tasks[task_id] = task_dict
@@ -404,7 +402,6 @@ class DownsampleTaskMapper:
     def _downsample_task_to_dict(
         self,
         task: "InfluxDownsampleTask",
-        organization_id: str,
         source_bucket_id: str,
         destination_bucket_id: str,
     ) -> dict[str, typing.Any]:
@@ -413,7 +410,6 @@ class DownsampleTaskMapper:
             "aggregate_functions": list(
                 map(lambda func: func.name, task.aggregate_functions)
             ),
-            "organization_id": organization_id,
             "data_sources": list(map(str, task.data_sources.get_or_default([]))),
             "aggregate_function_filters": list(
                 map(
@@ -542,7 +538,6 @@ class InfluxDownsampleTask(spi.DownsampleTask):
 
         self._downsample_task_mapper.add_downsample_task(
             self,
-            self._organization.id,
             source_bucket.identifier,
             destination_bucket.identifier,
         )
@@ -558,7 +553,6 @@ class InfluxDownsampleTask(spi.DownsampleTask):
         self._downsample_task_mapper.set_task_id(
             task.id,
             self,
-            self._organization.id,
             source_bucket.identifier,
             destination_bucket.identifier,
         )
