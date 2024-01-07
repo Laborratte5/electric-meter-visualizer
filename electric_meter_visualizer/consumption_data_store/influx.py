@@ -335,8 +335,8 @@ class DownsampleTaskMapper:
 
     def __init__(self, file_path: str) -> None:
         self._file_path: str = file_path
-        self._not_installed_tasks: list[dict[str, typing.Any]] = []
-        self._installed_tasks: dict[str, dict[str, typing.Any]] = {}
+        self._not_installed_tasks: list["InfluxDownsampleTask"] = []
+        self._installed_tasks: dict[str, "InfluxDownsampleTask"] = {}
 
     def add_downsample_task(
         self,
@@ -352,10 +352,7 @@ class DownsampleTaskMapper:
             destination_bucket_id (str): The destination bucket id for the task
         """
 
-        task_dict: dict[str, typing.Any] = self._downsample_task_to_dict(
-            task,
-        )
-        self._not_installed_tasks.append(task_dict)
+        self._not_installed_tasks.append(task)
         self._save()
 
     def set_task_id(
@@ -377,11 +374,8 @@ class DownsampleTaskMapper:
         """
         # pylint: disable=too-many-arguments
 
-        task_dict: dict[str, typing.Any] = self._downsample_task_to_dict(
-            task,
-        )
-        self._not_installed_tasks.remove(task_dict)
-        self._installed_tasks[task_id] = task_dict
+        self._not_installed_tasks.remove(task)
+        self._installed_tasks[task_id] = task
         self._save()
 
     def remove_downsample_task(self, task_id: str):
@@ -422,8 +416,13 @@ class DownsampleTaskMapper:
     def _save(self):
         logger.debug("Save downsample mapping")
         downsample_task_mapping_json: dict[str, typing.Any] = {
-            "not_installed": self._not_installed_tasks,
-            "installed_tasks": self._installed_tasks,
+            "not_installed": list(
+                map(self._downsample_task_to_dict, self._not_installed_tasks)
+            ),
+            "installed_tasks": {
+                task_id: self._downsample_task_to_dict(task)
+                for task_id, task in self._installed_tasks.items()
+            },
         }
 
         with open(self._file_path, "w", encoding="utf-8") as file:
