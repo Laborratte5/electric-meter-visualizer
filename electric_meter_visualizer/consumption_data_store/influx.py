@@ -393,17 +393,10 @@ class DownsampleTaskMapper:
         self,
         task: "InfluxDownsampleTask",
     ) -> dict[str, typing.Any]:
-        return {
-            "aggergate_window": int(task.aggregate_window.total_seconds()),
+        downsample_task_dict: dict[str, typing.Any] = {
+            "aggregate_window": int(task.aggregate_window.total_seconds()),
             "aggregate_functions": list(
                 map(lambda func: func.name, task.aggregate_functions)
-            ),
-            "data_sources": list(map(str, task.data_sources.get_or_default([]))),
-            "aggregate_function_filters": list(
-                map(
-                    lambda func: func.name,
-                    task.aggregate_function_filters.get_or_default([]),
-                )
             ),
             "source_bucket": task.source_bucket.get().identifier
             if task.source_bucket.is_present()
@@ -412,6 +405,21 @@ class DownsampleTaskMapper:
             if task.destination_bucket.is_present()
             else "",
         }
+
+        if task.data_sources.is_present():
+            downsample_task_dict["data_sources"] = list(
+                map(str, task.data_sources.get())
+            )
+
+        if task.aggregate_function_filters.is_present():
+            downsample_task_dict["aggregate_function_filters"] = list(
+                map(
+                    lambda func: func.name,
+                    task.aggregate_function_filters.get(),
+                )
+            )
+
+        return downsample_task_dict
 
     def _save(self):
         logger.debug("Save downsample mapping")
