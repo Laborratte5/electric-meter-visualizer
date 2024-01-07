@@ -463,11 +463,16 @@ class DownsampleTask(abc.ABC):
         if source_bucket is destination_bucket:
             raise ValueError("Destination Bucket cannot be Source Bucket")
 
-        self._install(source_bucket, destination_bucket)
-        self._installed = True
-
         self._source_bucket = Optional.of(source_bucket)
         self._destination_bucket = Optional.of(destination_bucket)
+
+        try:
+            self._install(source_bucket, destination_bucket)
+            self._installed = True
+        except Exception as ex:
+            self._source_bucket = Optional.empty()
+            self._destination_bucket = Optional.empty()
+            raise ex
 
         self.source_bucket.get().add_outbound_downsample_task(self)
         self.destination_bucket.get().add_inbound_downsample_task(self)
