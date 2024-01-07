@@ -3,8 +3,10 @@
 
 import json
 import logging
+import os
 import typing
 from datetime import datetime, timedelta
+from functools import partial
 from uuid import UUID
 
 import influxdb_client
@@ -421,6 +423,67 @@ class DownsampleTaskMapper:
 
         return downsample_task_dict
 
+    def _dict_to_downsample_task(
+        self,
+        tasks_api: influx_task_api.TasksApi,
+        organization: influx_domain.Organization,
+        buckets: dict[str, InfluxBucket],
+        task_dict: dict[str, typing.Any],
+        task_id="",
+    ) -> "InfluxDownsampleTask":
+        # pylint: disable=too-many-arguments
+        logger.debug("Deserialize downsample task dict: %s", task_dict)
+
+        aggregate_function_from_name = partial(getattr, spi.AggregateFunction)
+        aggregate_window: timedelta = timedelta(seconds=task_dict["aggregate_window"])
+        aggregate_functions: list[spi.AggregateFunction] = list(
+            map(aggregate_function_from_name, task_dict["aggregate_functions"])
+        )
+        data_sources: list[UUID] | None = (
+            list(map(UUID, task_dict["data_sources"]))
+            if "data_sources" in task_dict.keys()
+            else None
+        )
+        aggregate_function_filters: list[spi.AggregateFunction] | None = (
+            list(
+                map(
+                    aggregate_function_from_name,
+                    task_dict["aggregate_function_filters"],
+                )
+            )
+            if "aggregate_function_filters" in task_dict.keys()
+            else None
+        )
+        source_bucket: InfluxBucket | None = (
+            buckets[task_dict["source_bucket"]]
+            if task_dict["source_bucket"] != ""
+            else None
+        )
+        destination_bucket: InfluxBucket | None = (
+            buckets[task_dict["destination_bucket"]]
+            if task_dict["destination_bucket"] != ""
+            else None
+        )
+
+        downsample_task = InfluxDownsampleTask(
+            aggregate_window,
+            aggregate_functions,
+            tasks_api,
+            organization,
+            self,
+            task_id=task_id,
+            data_sources=data_sources,
+            aggregate_function_filters=aggregate_function_filters,
+            source_bucket=source_bucket,
+            destination_bucket=destination_bucket,
+        )
+        if source_bucket:
+            source_bucket.add_outbound_downsample_task(downsample_task)
+        if destination_bucket:
+            destination_bucket.add_inbound_downsample_task(downsample_task)
+
+        return downsample_task
+
     def _save(self):
         logger.debug("Save downsample mapping")
         downsample_task_mapping_json: dict[str, typing.Any] = {
@@ -435,6 +498,53 @@ class DownsampleTaskMapper:
 
         with open(self._file_path, "w", encoding="utf-8") as file:
             json.dump(downsample_task_mapping_json, file)
+
+    def load(
+        self,
+        task_api: influx_task_api.TasksApi,
+        organization: influx_domain.Organization,
+        buckets: list[InfluxBucket],
+    ):
+        """Loads the DownsampleTasks from the mappings file
+
+        Loads the DownsampleTasks from the mappings file
+        and adding the tasks to their corresponding buckets
+
+        Args:
+            task_api (influx_task_api.TasksApi): InfluxTaskApi
+                (needed to instantiate the InfluxDownsampleTasks)
+            organization (influx_domain.Organization): The influx organization
+                (needed to instantiate the InfluxDownsampleTasks)
+            buckets (list[InfluxBucket]): The influx buckets
+                (needed to set their corresponding DownsampleTasks)
+        """
+
+        if not os.path.exists(self._file_path):
+            logger.debug("No downsample mapping file at: %s", self._file_path)
+            return
+
+        logger.debug("Load downsample mapping from %s", self._file_path)
+        with open(self._file_path, "r", encoding="utf-8") as file:
+            downsample_task_mapping_json: dict[str, typing.Any] = json.load(file)
+            bucket_mapping: dict[str, InfluxBucket] = {
+                bucket.identifier: bucket for bucket in buckets
+            }
+            dict_to_task = partial(
+                self._dict_to_downsample_task, task_api, organization, bucket_mapping
+            )
+
+            self._not_installed_tasks = list(
+                map(
+                    dict_to_task,
+                    downsample_task_mapping_json["not_installed"],
+                )
+            )
+            self._installed_tasks = {
+                task_id: dict_to_task(task_dict, task_id=task_id)
+                for task_id, task_dict in downsample_task_mapping_json[
+                    "installed_tasks"
+                ].items()
+            }
 
 
 class InfluxDownsampleTask(spi.DownsampleTask):
