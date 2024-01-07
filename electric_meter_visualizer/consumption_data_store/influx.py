@@ -341,8 +341,6 @@ class DownsampleTaskMapper:
     def add_downsample_task(
         self,
         task: "InfluxDownsampleTask",
-        source_bucket_id: str,
-        destination_bucket_id: str,
     ):
         """Add the given downsample task as 'not installed'
         to the list of downsample taks
@@ -355,7 +353,7 @@ class DownsampleTaskMapper:
         """
 
         task_dict: dict[str, typing.Any] = self._downsample_task_to_dict(
-            task, source_bucket_id, destination_bucket_id
+            task,
         )
         self._not_installed_tasks.append(task_dict)
         self._save()
@@ -364,8 +362,6 @@ class DownsampleTaskMapper:
         self,
         task_id: str,
         task: "InfluxDownsampleTask",
-        source_bucket_id: str,
-        destination_bucket_id: str,
     ):
         """Sets the task_id for a bucket in the 'not installed' list
 
@@ -382,7 +378,7 @@ class DownsampleTaskMapper:
         # pylint: disable=too-many-arguments
 
         task_dict: dict[str, typing.Any] = self._downsample_task_to_dict(
-            task, source_bucket_id, destination_bucket_id
+            task,
         )
         self._not_installed_tasks.remove(task_dict)
         self._installed_tasks[task_id] = task_dict
@@ -402,8 +398,6 @@ class DownsampleTaskMapper:
     def _downsample_task_to_dict(
         self,
         task: "InfluxDownsampleTask",
-        source_bucket_id: str,
-        destination_bucket_id: str,
     ) -> dict[str, typing.Any]:
         return {
             "aggergate_window": int(task.aggregate_window.total_seconds()),
@@ -417,8 +411,12 @@ class DownsampleTaskMapper:
                     task.aggregate_function_filters.get_or_default([]),
                 )
             ),
-            "source_bucket": source_bucket_id,
-            "destination_bucket": destination_bucket_id,
+            "source_bucket": task.source_bucket.get().identifier
+            if task.source_bucket.is_present()
+            else "",
+            "destination_bucket": task.destination_bucket.get().identifier
+            if task.destination_bucket.is_present()
+            else "",
         }
 
     def _save(self):
@@ -538,8 +536,6 @@ class InfluxDownsampleTask(spi.DownsampleTask):
 
         self._downsample_task_mapper.add_downsample_task(
             self,
-            source_bucket.identifier,
-            destination_bucket.identifier,
         )
 
         task: influxdb_client.Task = self._tasks_api.create_task_every(
@@ -553,8 +549,6 @@ class InfluxDownsampleTask(spi.DownsampleTask):
         self._downsample_task_mapper.set_task_id(
             task.id,
             self,
-            source_bucket.identifier,
-            destination_bucket.identifier,
         )
 
     def _uninstall(self):
